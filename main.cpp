@@ -9,6 +9,9 @@ int main() {
     cin >> number_requests;
     string hh;
     getline(cin, hh);
-   InputReader input(number_requests);
+   InputReader input_reader(number_requests);
+   TransportCatalogue transport_catalogue = input_reader.RequestProcessing();
 
+
+    cin >> number_requests;
 }
