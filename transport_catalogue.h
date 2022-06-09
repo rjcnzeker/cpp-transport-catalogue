@@ -21,13 +21,15 @@ public:
         std::string name_;
         std::vector<Stop *> bus_stops_;
         bool there_and_back_;
+        int unique_stops_;
+        double distance_;
     };
 
     TransportCatalogue() = default;
 
     void AddStop(std::string &name, Coordinates coordinates);
 
-    void AddBus(std::string &name, std::deque<std::string_view> stops, bool there_and_back);
+    void AddBus(std::string &name, const std::deque<std::string_view>& stops, bool there_and_back);
 
     Bus GetBus(std::string_view name);
 

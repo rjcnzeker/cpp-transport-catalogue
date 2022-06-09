@@ -1,5 +1,8 @@
 #include <string>
 #include <iostream>
+#include <vector>
+#include <set>
+#include <iomanip>
 
 #include "stat_reader.h"
 
@@ -17,12 +20,21 @@ void ReadQuery(int num_queries, TransportCatalogue &transport_catalogue) {
 }
 
 void PrintBus(const string& name, TransportCatalogue & transport_catalogue) {
+
     cout << name << ": "s;
     TransportCatalogue::Bus bus = transport_catalogue.GetBus(name);
+
     if (bus.bus_stops_.empty()) {
         cout << "not found" << '\n';
         return;
     }
+    cout << bus.bus_stops_.size() << " stops on route, "s;
+
+    cout << bus.unique_stops_ << " unique stops, "s;
+
+    double lenght = bus.there_and_back_ ? bus.distance_ * 2 : bus.distance_;
+
+    cout << setprecision(6) <<  lenght << " route length"s;
 
     cout << '\n';
 }
