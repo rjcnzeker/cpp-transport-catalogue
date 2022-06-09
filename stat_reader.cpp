@@ -38,10 +38,10 @@ void PrintStop(const string& name, TransportCatalogue &transport_catalogue) {
         return;
     }
 
-    cout << "buses ";
+    cout << "buses";
 
     for (string_view bus : buses_on_stop) {
-        cout << bus << " ";
+        cout << " " << bus;
     }
 
     cout << '\n';
