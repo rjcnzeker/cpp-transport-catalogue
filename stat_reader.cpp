@@ -16,7 +16,35 @@ void ReadQuery(int num_queries, TransportCatalogue &transport_catalogue) {
         if (line[0] == 'B') {
             PrintBus(line, transport_catalogue);
         }
+
+        if (line[0] == 'S') {
+            PrintStop(line, transport_catalogue);
+        }
     }
+}
+
+void PrintStop(const string& name, TransportCatalogue &transport_catalogue) {
+    cout << name << ": ";
+
+    if (transport_catalogue.GetStop(name).name_.empty()) {
+        cout << "not found" << '\n';
+        return;
+    }
+
+    set<string_view> buses_on_stop = transport_catalogue.GetBusesOnStop(name);
+
+    if (buses_on_stop.empty()) {
+        cout << "no buses" << '\n';
+        return;
+    }
+
+    cout << "buses ";
+
+    for (string_view bus : buses_on_stop) {
+        cout << bus << " ";
+    }
+
+    cout << '\n';
 }
 
 void PrintBus(const string& name, TransportCatalogue & transport_catalogue) {

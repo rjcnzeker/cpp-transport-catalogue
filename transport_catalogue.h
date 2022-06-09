@@ -33,7 +33,11 @@ public:
 
     Bus GetBus(std::string_view name);
 
+    std::set<std::string_view> GetBusesOnStop(std::string_view name);
 
+    Stop GetStop(std::string_view name);
+
+private:
 
     std::deque<Stop> stops_;
     std::unordered_map<std::string_view, Stop *> stopname_to_stops_;

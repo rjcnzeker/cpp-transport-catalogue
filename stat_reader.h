@@ -5,3 +5,5 @@
 void ReadQuery(int num_queries, TransportCatalogue &transport_catalogue);
 
 void PrintBus(const std::string& name, TransportCatalogue & transport_catalogue);
+
+void PrintStop(const std::string& name, TransportCatalogue &transport_catalogue);

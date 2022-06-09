@@ -50,10 +50,36 @@ void TransportCatalogue::AddBus(std::string &name, const std::deque<std::string_
     busname_to_buses_[(buses_.end() - 1)->name_] = &*(buses_.end() - 1);
 }
 
-TransportCatalogue::Bus TransportCatalogue::GetBus(std::string_view name) {
+TransportCatalogue::Bus TransportCatalogue::GetBus(string_view name) {
     name.remove_prefix(4);
     if (busname_to_buses_.count(name) != 0) {
         return *busname_to_buses_.at(name);
     }
     return Bus{};
+}
+
+std::set<std::string_view> TransportCatalogue::GetBusesOnStop(string_view name) {
+    name.remove_prefix(5);
+
+    set<string_view> buses_on_stop;
+
+    for (auto [name_bus, bus] : busname_to_buses_) {
+        for (auto stop : bus->bus_stops_) {
+            if (stop->name_ == name) {
+                buses_on_stop.insert(name_bus);
+            }
+        }
+    }
+
+
+    return buses_on_stop;
+}
+
+TransportCatalogue::Stop TransportCatalogue::GetStop(string_view name) {
+    name.remove_prefix(5);
+
+    if (stopname_to_stops_.count(name) != 0) {
+        return *stopname_to_stops_.at(name);
+    }
+    return Stop{};
 }
