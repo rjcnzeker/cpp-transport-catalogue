@@ -1,11 +1,11 @@
+#pragma once
+
 #include <deque>
 #include <string>
 #include <unordered_map>
 #include <utility>
 #include <vector>
 
-#include "input_reader.h"
-#include "stat_reader.h"
 #include "geo.h"
 
 class TransportCatalogue {

@@ -1,4 +1,4 @@
-
+#pragma once
 
 #include "transport_catalogue.h"
 

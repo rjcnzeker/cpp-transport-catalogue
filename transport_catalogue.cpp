@@ -27,6 +27,7 @@ void TransportCatalogue::AddBus(std::string &name, std::deque<std::string_view> 
 }
 
 TransportCatalogue::Bus TransportCatalogue::GetBus(std::string_view name) {
+    name.remove_prefix(4);
     if (busname_to_buses_.count(name) != 0) {
         return *busname_to_buses_.at(name);
     }

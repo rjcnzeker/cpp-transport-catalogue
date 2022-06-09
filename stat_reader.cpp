@@ -1,5 +1,6 @@
 #include <string>
 #include <iostream>
+
 #include "stat_reader.h"
 
 using namespace std;
@@ -18,6 +19,10 @@ void ReadQuery(int num_queries, TransportCatalogue &transport_catalogue) {
 void PrintBus(const string& name, TransportCatalogue & transport_catalogue) {
     cout << name << ": "s;
     TransportCatalogue::Bus bus = transport_catalogue.GetBus(name);
+    if (bus.bus_stops_.empty()) {
+        cout << "not found" << '\n';
+        return;
+    }
 
     cout << '\n';
 }
