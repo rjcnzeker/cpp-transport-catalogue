@@ -1,6 +1,6 @@
-#include "input_reader.h"
-
 #include <iostream>
+
+#include "transport_catalogue.h"
 
 using namespace std;
 
@@ -12,6 +12,9 @@ int main() {
    InputReader input_reader(number_requests);
    TransportCatalogue transport_catalogue = input_reader.RequestProcessing();
 
+    int number_queries;
+    cin >> number_queries;
+    getline(cin, hh);
+    ReadQuery(number_queries, transport_catalogue);
 
-    cin >> number_requests;
 }

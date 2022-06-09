@@ -9,6 +9,7 @@
 
 #include "transport_catalogue.h"
 
+
 class InputReader {
 public:
     explicit InputReader(int number_requests);
@@ -21,4 +22,8 @@ private:
         STOP,
     };
     std::map<RequestType, std::vector<std::string>> request_queue_;
+
+    static void StopsProcessing(TransportCatalogue &transport_catalogue, std::string_view &request) ;
+
+    static void BusesProcessing(TransportCatalogue &transport_catalogue, std::string_view &request) ;
 };
