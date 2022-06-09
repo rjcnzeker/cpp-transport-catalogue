@@ -25,8 +25,6 @@ InputReader::InputReader(int number_requests) : request_queue_() {
 TransportCatalogue InputReader::RequestProcessing() {
     TransportCatalogue transport_catalogue;
 
-    cout << setprecision(8);
-
     for (string_view request : request_queue_[RequestType::STOP]) {
         StopsProcessing(transport_catalogue, request);
     }
@@ -43,15 +41,24 @@ void InputReader::BusesProcessing(TransportCatalogue &transport_catalogue, strin
     request.remove_prefix(request.find_first_not_of(' ', bus_name.size() + 1));
 
     bool there_and_back = false;
-    if (request[request.find_first_of('-')] == '-') {
+    char separator = request[min(request.find('-'), request.find('>'))];
+    if (separator == '-') {
         there_and_back = true;
     }
 
     deque<string_view> stops;
     while (!request.empty()) {
-        string_view stop = request.substr(0, min(request.find_first_of('-'), request.find_first_of('>')) - 1);
+        string_view stop = request.substr(0, request.find(separator));
+        stop = stop.substr(0, stop.find_last_not_of(' ') + 1);
         stops.emplace_back(stop);
-        request.remove_prefix(min(stop.size() + 3, request.size()));
+
+
+        if (request.find_first_of(' ', stop.size()) > request.size()) {
+            break;
+        }
+
+        request.remove_prefix(request.find(separator) + 1);
+        request.remove_prefix(request.find_first_not_of(' '));
     }
 
     transport_catalogue.AddBus(bus_name, stops, there_and_back);
@@ -61,7 +68,7 @@ void InputReader::StopsProcessing(TransportCatalogue &transport_catalogue, strin
     string stop_name = string(request.substr(0, request.find_first_of(':')));
     request.remove_prefix(request.find_first_not_of(' ', stop_name.size() + 1));
 
-    Coordinates coordinates;
+    Coordinates coordinates(0.0, 0.0);
     string_view latitude = request.substr(0, request.find_first_of(','));
     coordinates.lat = stod(string(latitude));
 

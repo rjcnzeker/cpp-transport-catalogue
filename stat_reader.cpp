@@ -28,7 +28,10 @@ void PrintBus(const string& name, TransportCatalogue & transport_catalogue) {
         cout << "not found" << '\n';
         return;
     }
-    cout << bus.bus_stops_.size() << " stops on route, "s;
+
+    int stops = bus.there_and_back_ ? (bus.bus_stops_.size() * 2) - 1 : bus.bus_stops_.size();
+
+    cout << stops << " stops on route, "s;
 
     cout << bus.unique_stops_ << " unique stops, "s;
 

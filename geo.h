@@ -3,8 +3,16 @@
 #include <cmath>
 
 struct Coordinates {
+
     double lat;
     double lng;
+
+    Coordinates(double lat, double lng) : lat(lat), lng(lng) {
+
+    }
+
+    Coordinates() = default;
+
     bool operator==(const Coordinates& other) const {
         return lat == other.lat && lng == other.lng;
     }
