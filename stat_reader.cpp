@@ -65,7 +65,7 @@ void PrintBus(const string& name, TransportCatalogue & transport_catalogue) {
 
     // double distance = bus.there_and_back_ ? bus.distance_ * 2 : bus.distance_;
 
-    cout << bus.distance_ << " route length, "s;
+    cout << setprecision(6) << bus.distance_ << " route length, "s;
 
     cout << setprecision(6) << bus.curvature_ << " curvature"s;
 

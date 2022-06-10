@@ -26,7 +26,7 @@ public:
         bool there_and_back_;
         int unique_stops_;
         double coordinate_distance_;
-        uint32_t distance_;
+        double distance_;
         float curvature_;
     };
 
