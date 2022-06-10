@@ -63,9 +63,11 @@ void PrintBus(const string& name, TransportCatalogue & transport_catalogue) {
 
     cout << bus.unique_stops_ << " unique stops, "s;
 
-    double lenght = bus.there_and_back_ ? bus.distance_ * 2 : bus.distance_;
+    // double distance = bus.there_and_back_ ? bus.distance_ * 2 : bus.distance_;
 
-    cout << setprecision(6) <<  lenght << " route length"s;
-
+    cout << bus.distance_ << " route length"s;
+    /*
+    cout << setprecision(6) << coordinare_distance << " route length"s;
+*/
     cout << '\n';
 }

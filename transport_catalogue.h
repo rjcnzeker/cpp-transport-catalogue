@@ -25,7 +25,8 @@ public:
         std::vector<Stop *> bus_stops_;
         bool there_and_back_;
         int unique_stops_;
-        double distance_;
+        double coordinate_distance_;
+        uint32_t distance_;
     };
 
     TransportCatalogue() = default;
