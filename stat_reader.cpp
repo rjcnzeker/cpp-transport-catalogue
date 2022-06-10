@@ -8,22 +8,25 @@
 
 using namespace std;
 
-void ReadQuery(int num_queries, TransportCatalogue &transport_catalogue) {
+using namespace transport_catalogue;
+
+void transport_catalogue::ReadQuery(int num_queries, TransportCatalogue &transport_catalogue) {
+
     for (int i = 0; i < num_queries; ++i) {
         string line;
         getline(cin, line);
 
         if (line[0] == 'B') {
-            PrintBus(line, transport_catalogue);
+            transport_catalogue::Print::Bus(line, transport_catalogue);
         }
 
         if (line[0] == 'S') {
-            PrintStop(line, transport_catalogue);
+            transport_catalogue::Print::Stop(line, transport_catalogue);
         }
     }
 }
 
-void PrintStop(const string& name, TransportCatalogue &transport_catalogue) {
+void transport_catalogue::Print::Stop(const string &name, TransportCatalogue &transport_catalogue) {
     cout << name << ": ";
 
     if (transport_catalogue.GetStop(name).name_.empty()) {
@@ -47,7 +50,7 @@ void PrintStop(const string& name, TransportCatalogue &transport_catalogue) {
     cout << '\n';
 }
 
-void PrintBus(const string& name, TransportCatalogue & transport_catalogue) {
+void transport_catalogue::Print::Bus(const string &name, TransportCatalogue &transport_catalogue) {
 
     cout << name << ": "s;
     TransportCatalogue::Bus bus = transport_catalogue.GetBus(name);

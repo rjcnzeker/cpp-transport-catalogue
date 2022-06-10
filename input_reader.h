@@ -11,21 +11,25 @@
 
 #include "transport_catalogue.h"
 
+namespace transport_catalogue {
 
-class InputReader {
-public:
-    explicit InputReader(int number_requests);
+    class InputReader {
+    public:
+        explicit InputReader(int number_requests);
 
-    TransportCatalogue RequestProcessing();
+        TransportCatalogue RequestProcessing();
 
-private:
-    enum class RequestType {
-        BUS,
-        STOP,
+    private:
+
+        enum class RequestType {
+            BUS,
+            STOP,
+        };
+        std::map<RequestType, std::vector<std::string>> request_queue_;
+
+        static void StopsProcessing(TransportCatalogue &transport_catalogue, std::string_view &request);
+
+        static void BusesProcessing(TransportCatalogue &transport_catalogue, std::string_view &request);
     };
-    std::map<RequestType, std::vector<std::string>> request_queue_;
+}
 
-    static void StopsProcessing(TransportCatalogue &transport_catalogue, std::string_view &request) ;
-
-    static void BusesProcessing(TransportCatalogue &transport_catalogue, std::string_view &request) ;
-};
