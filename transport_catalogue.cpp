@@ -82,9 +82,14 @@ void TransportCatalogue::AddBus(std::string &name, const std::deque<std::string_
         map_distance += distances_.at({last_stop, last_stop});
     }
 
+    if (there_and_back) {
+        coordinates_distances *= 2;
+    }
+
     bus.there_and_back_ = there_and_back;
     bus.coordinate_distance_ = coordinates_distances;
     bus.distance_ = map_distance;
+    bus.curvature_ = bus.distance_ / bus.coordinate_distance_;
 
     buses_.emplace_back(bus);
     busname_to_buses_[(buses_.end() - 1)->name_] = &*(buses_.end() - 1);

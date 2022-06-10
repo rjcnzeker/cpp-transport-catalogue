@@ -27,6 +27,7 @@ public:
         int unique_stops_;
         double coordinate_distance_;
         uint32_t distance_;
+        float curvature_;
     };
 
     TransportCatalogue() = default;
