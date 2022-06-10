@@ -1,18 +1,24 @@
 #include <string_view>
 #include <utility>
 #include <set>
+#include <map>
 
 #include "geo.h"
 #include "transport_catalogue.h"
 
 using namespace std;
 
-void TransportCatalogue::AddStop(std::string &name, Coordinates coordinates) {
+void TransportCatalogue::AddStop(std::string &name, Coordinates coordinates,
+                                 const map<string_view, int> &distances) {
     Stop stop;
-    stop.name_ = std::move(name);
+    stop.name_ = name;
     stop.coordinates_ = coordinates;
     stops_.emplace_back(stop);
     stopname_to_stops_[(stops_.end() - 1)->name_] = &*(stops_.end() - 1);
+
+    for (auto pair_stops : distances) {
+        distances_.insert({{(stops_.end() - 1)->name_, pair_stops.first}, pair_stops.second});
+    }
 }
 
 void TransportCatalogue::AddBus(std::string &name, const std::deque<std::string_view> &stops, bool there_and_back) {
@@ -32,7 +38,7 @@ void TransportCatalogue::AddBus(std::string &name, const std::deque<std::string_
         bus.bus_stops_.push_back(stopname_to_stops_.at(stop_name));
 
         if (first_stop) {
-             left = stopname_to_stops_.at(stop_name)->coordinates_;
+            left = stopname_to_stops_.at(stop_name)->coordinates_;
         }
         right = stopname_to_stops_.at(stop_name)->coordinates_;
 
@@ -82,4 +88,12 @@ TransportCatalogue::Stop TransportCatalogue::GetStop(string_view name) {
         return *stopname_to_stops_.at(name);
     }
     return Stop{};
+}
+
+size_t
+TransportCatalogue::PairStopsHasger::operator()(const pair<std::string_view, std::string_view> &stops_pair) const {
+    string left_plus_right(stops_pair.first.substr(0));
+    left_plus_right += stops_pair.second.substr(0);
+
+    return d_hasher_(left_plus_right);
 }

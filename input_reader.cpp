@@ -71,13 +71,42 @@ void InputReader::StopsProcessing(TransportCatalogue &transport_catalogue, strin
     Coordinates coordinates(0.0, 0.0);
     string_view latitude = request.substr(0, request.find_first_of(','));
     coordinates.lat = stod(string(latitude));
-
     request.remove_prefix(latitude.size() + 1);
-
-    string_view longitude = request.substr(request.find_first_not_of(' '));
+    string_view longitude = request.substr(1, request.find_first_of(',') - 1);
     coordinates.lng = stod(string(longitude));
+    request.remove_prefix(longitude.size() + 2);
 
-    transport_catalogue.AddStop(stop_name, coordinates);
+    auto request_size = request.size();
+    bool have_distances = true;
+    if (request.size() == request.npos) {
+        have_distances = false;
+    }
+
+    map<string_view, int> distances;
+    while (have_distances) {
+        request.remove_prefix(request.find_first_not_of(' '));
+        string distance_to_next_str = string(request.substr(0, request.find_first_of('m')));
+        int distance_to_next = stoi(distance_to_next_str);
+        request.remove_prefix(distance_to_next_str.size() + 2);
+
+        request.remove_prefix(request.find(' ') + 1);
+        string_view name_next = request.substr(0, request.find(','));
+
+        distances.insert({name_next, distance_to_next});
+
+        auto request_next_words_size = request.find_first_of(' ', name_next.size());
+        if (request_next_words_size > request.size()) {
+            break;
+        }
+
+        request.remove_prefix(max(name_next.size(), request.find_first_of(' ', name_next.size())));
+
+
+        //distances.insert({{stop_name, name_next}, distance_to_next});
+    }
+
+
+    transport_catalogue.AddStop(stop_name, coordinates, distances);
 }
 
 

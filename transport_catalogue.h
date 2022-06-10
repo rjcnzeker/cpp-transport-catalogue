@@ -5,8 +5,11 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+#include <map>
+#include <unordered_map>
 
 #include "geo.h"
+
 
 class TransportCatalogue {
 
@@ -27,7 +30,7 @@ public:
 
     TransportCatalogue() = default;
 
-    void AddStop(std::string &name, Coordinates coordinates);
+    void AddStop(std::string &name, Coordinates coordinates, const std::map<std::string_view, int> &distances);
 
     void AddBus(std::string &name, const std::deque<std::string_view>& stops, bool there_and_back);
 
@@ -45,5 +48,12 @@ private:
     std::deque<Bus> buses_;
     std::unordered_map<std::string_view, const Bus *> busname_to_buses_;
 
+    struct PairStopsHasger {
+        size_t operator()(const std::pair<std::string_view, std::string_view> &stops_pair) const;
 
+    private:
+        std::hash<std::string> d_hasher_;
+    };
+
+    std::unordered_map<std::pair<std::string_view, std::string_view>, int, PairStopsHasger> distances_;
 };
