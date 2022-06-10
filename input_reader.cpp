@@ -76,7 +76,6 @@ void InputReader::StopsProcessing(TransportCatalogue &transport_catalogue, strin
     coordinates.lng = stod(string(longitude));
     request.remove_prefix(longitude.size() + 2);
 
-    auto request_size = request.size();
     bool have_distances = true;
     if (request.size() == request.npos) {
         have_distances = false;
