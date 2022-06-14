@@ -4,13 +4,13 @@
 
 namespace transport_catalogue {
 
-    void ReadQuery(int num_queries, TransportCatalogue &transport_catalogue);
+    void ReadQuery(int num_queries, TransportCatalogue &transport_catalogue, std::istream &input);
 
-    namespace Print {
+    namespace print {
 
-        void Bus(const std::string &name, TransportCatalogue &transport_catalogue);
+        void Bus(const std::string &name, TransportCatalogue &transport_catalogue, std::ostream &output);
 
-        void Stop(const std::string &name, TransportCatalogue &transport_catalogue);
+        void Stop(const std::string &name, TransportCatalogue &transport_catalogue, std::ostream &output);
 
     }
 }

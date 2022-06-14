@@ -7,10 +7,10 @@ using namespace std;
 
 namespace transport_catalogue {
 
-    InputReader::InputReader(int number_requests) : request_queue_() {
+    InputReader::InputReader(int number_requests, istream &input) : request_queue_() {
         for (int i = 0; i < number_requests; ++i) {
             string line;
-            getline(cin, line);
+            getline(input, line);
             if (line[0] == 'B') {
                 line = line.substr(line.find_first_not_of(' ', 3));
                 request_queue_[RequestType::BUS].push_back(move(line));
@@ -24,21 +24,21 @@ namespace transport_catalogue {
         }
     }
 
-    TransportCatalogue InputReader::RequestProcessing() {
+    TransportCatalogue InputReader::ProcessRequests() {
         TransportCatalogue transport_catalogue;
 
         for (string_view request : request_queue_[RequestType::STOP]) {
-            StopsProcessing(transport_catalogue, request);
+            ProcessStops(transport_catalogue, request);
         }
 
         for (string_view request : request_queue_[RequestType::BUS]) {
-            BusesProcessing(transport_catalogue, request);
+            ProcessBuses(transport_catalogue, request);
         }
 
         return transport_catalogue;
     }
 
-    void InputReader::BusesProcessing(TransportCatalogue &transport_catalogue, string_view &request) {
+    void InputReader::ProcessBuses(TransportCatalogue &transport_catalogue, string_view &request) {
         string bus_name = string(request.substr(0, request.find_first_of(':')));
         request.remove_prefix(request.find_first_not_of(' ', bus_name.size() + 1));
 
@@ -66,7 +66,7 @@ namespace transport_catalogue {
         transport_catalogue.AddBus(bus_name, stops, there_and_back);
     }
 
-    void InputReader::StopsProcessing(TransportCatalogue &transport_catalogue, string_view &request) {
+    void InputReader::ProcessStops(TransportCatalogue &transport_catalogue, string_view &request) {
         string stop_name = string(request.substr(0, request.find_first_of(':')));
         request.remove_prefix(request.find_first_not_of(' ', stop_name.size() + 1));
 

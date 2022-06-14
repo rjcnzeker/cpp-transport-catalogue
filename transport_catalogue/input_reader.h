@@ -15,9 +15,9 @@ namespace transport_catalogue {
 
     class InputReader {
     public:
-        explicit InputReader(int number_requests);
+        explicit InputReader(int number_requests, std::istream &input);
 
-        TransportCatalogue RequestProcessing();
+        TransportCatalogue ProcessRequests();
 
     private:
 
@@ -27,9 +27,9 @@ namespace transport_catalogue {
         };
         std::map<RequestType, std::vector<std::string>> request_queue_;
 
-        static void StopsProcessing(TransportCatalogue &transport_catalogue, std::string_view &request);
+        static void ProcessStops(TransportCatalogue &transport_catalogue, std::string_view &request);
 
-        static void BusesProcessing(TransportCatalogue &transport_catalogue, std::string_view &request);
+        static void ProcessBuses(TransportCatalogue &transport_catalogue, std::string_view &request);
     };
 }
 
