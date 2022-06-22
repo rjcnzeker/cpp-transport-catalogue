@@ -7,6 +7,7 @@
 #include <vector>
 #include <map>
 #include <unordered_map>
+#include <set>
 
 #include "geo.h"
 #include "domain.h"
@@ -29,6 +30,13 @@ namespace transport_catalogue {
         Stop GetStop(std::string_view name);
 
     private:
+
+        struct PairStopsHasher {
+            size_t operator()(const std::pair<std::string_view, std::string_view> &stops_pair) const;
+
+        private:
+            std::hash<std::string> d_hasher_;
+        };
 
         std::deque<Stop> stops_;
         std::unordered_map<std::string_view, Stop *> stopname_to_stops_;

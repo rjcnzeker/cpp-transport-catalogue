@@ -1,6 +1,5 @@
 #include <iostream>
 
-#include "input_reader.h"
 #include "request_handler.h"
 
 using namespace std;
@@ -14,11 +13,11 @@ int main() {
     string hh;
     getline(input, hh);
 
-    InputReader input_reader(number_requests, input);
+    cin_input::InputReader input_reader(number_requests, input);
     TransportCatalogue transport_catalogue = input_reader.ProcessRequests();
 
     int number_queries;
     cin >> number_queries;
     getline(cin, hh);
-    ReadQuery(number_queries, transport_catalogue, input);
+    cin_output::ReadQuery(number_queries, transport_catalogue, input);
 }

@@ -21,5 +21,5 @@ namespace geo {
         bool operator!=(const Coordinates &other) const;
     };
 
-    inline double ComputeDistance(Coordinates from, Coordinates to);
+    double ComputeDistance(Coordinates from, Coordinates to);
 }

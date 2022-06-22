@@ -19,9 +19,3 @@ struct Bus {
     float curvature_;
 };
 
-struct PairStopsHasher {
-    size_t operator()(const std::pair<std::string_view, std::string_view> &stops_pair) const;
-
-private:
-    std::hash<std::string> d_hasher_;
-};
