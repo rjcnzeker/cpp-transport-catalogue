@@ -10,7 +10,7 @@ using namespace std;
 
 namespace transport_catalogue {
 
-    void TransportCatalogue::AddStop(std::string &name, Coordinates coordinates,
+    void TransportCatalogue::AddStop(std::string &name, geo::Coordinates coordinates,
                                      const map<string_view, int> &distances) {
         Stop stop;
         stop.name_ = name;
@@ -35,8 +35,8 @@ namespace transport_catalogue {
         double coordinates_distances = 0;
         int map_distance = 0;
 
-        Coordinates left_coord(0.0, 0.0);
-        Coordinates right_coord(0.0, 0.0);
+        geo::Coordinates left_coord(0.0, 0.0);
+        geo::Coordinates right_coord(0.0, 0.0);
         string_view left_stop, right_stop;
         for (std::string_view stop_name : stops) {
             bus.bus_stops_.push_back(stopname_to_stops_.at(stop_name));
@@ -97,7 +97,7 @@ namespace transport_catalogue {
         busname_to_buses_[(buses_.end() - 1)->name_] = &*(buses_.end() - 1);
     }
 
-    TransportCatalogue::Bus TransportCatalogue::GetBus(string_view name) {
+    Bus TransportCatalogue::GetBus(string_view name) {
         name.remove_prefix(4);
         if (busname_to_buses_.count(name) != 0) {
             return *busname_to_buses_.at(name);
@@ -105,14 +105,15 @@ namespace transport_catalogue {
         return Bus{};
     }
 
-    std::set<std::string_view> TransportCatalogue::GetBusesOnStop(string_view name) {
-        name.remove_prefix(5);
+    std::set<std::string_view> TransportCatalogue::GetBusesOnStop(string& name) {
+        string_view name_view = name;
+        name_view.remove_prefix(5);
 
         set<string_view> buses_on_stop;
 
         for (auto [name_bus, bus] : busname_to_buses_) {
             for (auto stop : bus->bus_stops_) {
-                if (stop->name_ == name) {
+                if (stop->name_ == name_view) {
                     buses_on_stop.insert(name_bus);
                 }
             }
@@ -122,7 +123,7 @@ namespace transport_catalogue {
         return buses_on_stop;
     }
 
-    TransportCatalogue::Stop TransportCatalogue::GetStop(string_view name) {
+    Stop TransportCatalogue::GetStop(string_view name) {
         name.remove_prefix(5);
 
         if (stopname_to_stops_.count(name) != 0) {
@@ -130,13 +131,4 @@ namespace transport_catalogue {
         }
         return Stop{};
     }
-
-    size_t
-    TransportCatalogue::PairStopsHasger::operator()(const pair <std::string_view, std::string_view> &stops_pair) const {
-        string left_plus_right(stops_pair.first.substr(0));
-        left_plus_right += stops_pair.second.substr(0);
-
-        return d_hasher_(left_plus_right);
-    }
-
 }
