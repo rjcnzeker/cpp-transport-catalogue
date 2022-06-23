@@ -326,7 +326,7 @@ namespace json {
 
     bool Node::IsDouble() const {
         bool pd = IsPureDouble();
-        if (pd == true) {
+        if (pd) {
             return pd;
         }
         pd = IsInt();

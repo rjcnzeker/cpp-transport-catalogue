@@ -193,7 +193,7 @@ namespace json {
                         base_requests_buses.push_back(request);
                     } else if (request.AsMap().at("type") == "Stop") {
                         base_requests_stops.push_back(request);
-                    };
+                    }
                 }
                 continue;
             } else if (node.first == "stat_requests") {
