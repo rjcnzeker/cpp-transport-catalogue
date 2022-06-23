@@ -11,19 +11,19 @@ using namespace std;
 namespace transport_catalogue {
 
     void TransportCatalogue::AddStop(std::string &name, geo::Coordinates coordinates,
-                                     const map<string_view, int> &distances) {
+                                     const map<string, int> &distances) {
         Stop stop;
         stop.name_ = name;
         stop.coordinates_ = coordinates;
         stops_.emplace_back(stop);
         stopname_to_stops_[(stops_.end() - 1)->name_] = &*(stops_.end() - 1);
 
-        for (auto pair_stops : distances) {
+        for (const auto &pair_stops : distances) {
             distances_.insert({{(stops_.end() - 1)->name_, pair_stops.first}, pair_stops.second});
         }
     }
 
-    void TransportCatalogue::AddBus(std::string &name, const std::deque<std::string_view> &stops, bool there_and_back) {
+    void TransportCatalogue::AddBus(std::string &name, const std::deque<std::string> &stops, bool there_and_back) {
         Bus bus;
         bus.name_ = name;
 
@@ -37,7 +37,7 @@ namespace transport_catalogue {
 
         geo::Coordinates left_coord(0.0, 0.0);
         geo::Coordinates right_coord(0.0, 0.0);
-        string_view left_stop, right_stop;
+        string left_stop, right_stop;
         for (std::string_view stop_name : stops) {
             bus.bus_stops_.push_back(stopname_to_stops_.at(stop_name));
 
@@ -78,7 +78,7 @@ namespace transport_catalogue {
             left_stop = right_stop;
         }
 
-        string_view last_stop = right_stop;
+        string last_stop = right_stop;
 
         if (there_and_back && distances_.count({last_stop, last_stop}) != 0) {
             map_distance += distances_.at({last_stop, last_stop});
@@ -98,16 +98,16 @@ namespace transport_catalogue {
     }
 
     Bus TransportCatalogue::GetBus(string_view name) {
-        name.remove_prefix(4);
+       // name.remove_prefix(4);
         if (busname_to_buses_.count(name) != 0) {
             return *busname_to_buses_.at(name);
         }
         return Bus{};
     }
 
-    std::set<std::string_view> TransportCatalogue::GetBusesOnStop(string& name) {
+    std::set<std::string_view> TransportCatalogue::GetBusesOnStop(const string& name) {
         string_view name_view = name;
-        name_view.remove_prefix(5);
+       // name_view.remove_prefix(5);
 
         set<string_view> buses_on_stop;
 

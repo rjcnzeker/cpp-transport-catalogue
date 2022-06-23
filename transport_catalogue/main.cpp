@@ -1,23 +1,20 @@
 #include <iostream>
+#include <memory>
 
 #include "request_handler.h"
+#include "json.h"
 
 using namespace std;
 
 using namespace transport_catalogue;
 
 int main() {
-    std::istream &input = std::cin;
-    int number_requests;
-    input >> number_requests;
-    string hh;
-    getline(input, hh);
+    auto catalogue = make_unique<TransportCatalogue>();
+    json::RequestHandler request_handler(*catalogue);
 
-    cin_input::InputReader input_reader(number_requests, input);
-    TransportCatalogue transport_catalogue = input_reader.ProcessRequests();
+    istream &input = cin;
+    json::Document out  = request_handler.JSONProcessRequests(input);
 
-    int number_queries;
-    cin >> number_queries;
-    getline(cin, hh);
-    cin_output::ReadQuery(number_queries, transport_catalogue, input);
+    Print(out,cout);
+   // Print(hhh,cout);
 }
