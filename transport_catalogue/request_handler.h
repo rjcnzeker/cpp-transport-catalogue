@@ -60,9 +60,6 @@ namespace json {
         explicit RequestHandler(transport_catalogue::TransportCatalogue &db/*, const renderer::MapRenderer& renderer*/)
                 : db_(db) {}
 
-        Document JSONProcessRequests(std::istream &input);
-
-
 /*
     // Возвращает информацию о маршруте (запрос Buss)
     std::optional<Bus> GetBusStat(const std::string_view& bus_name) const;
@@ -76,13 +73,6 @@ namespace json {
     private:
         // RequestHandler использует агрегацию объектов "Транспортный Справочник" и "Визуализатор Карты"
         transport_catalogue::TransportCatalogue &db_;
-
-        void ProcessBaseBusRequests(const std::vector<json::Node> &buses_requests) const;
-
-        void ProcessBaseStopRequests(const std::vector<Node> &stops_requests) const;
-
-        //const renderer::MapRenderer& renderer_;
-        Document ProcessStateRequests(const std::vector<Node> &state_stops_requests);
     };
 }
 
