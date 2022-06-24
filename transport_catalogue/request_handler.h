@@ -74,8 +74,6 @@ namespace json {
         // svg::Document RenderMap() const;
 
     private:
-
-
         // RequestHandler использует агрегацию объектов "Транспортный Справочник" и "Визуализатор Карты"
         transport_catalogue::TransportCatalogue &db_;
 

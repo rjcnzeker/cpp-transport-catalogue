@@ -124,7 +124,7 @@ namespace transport_catalogue {
     }
 
     Stop TransportCatalogue::GetStop(string_view name) {
-        name.remove_prefix(5);
+        //name.remove_prefix(5);
 
         if (stopname_to_stops_.count(name) != 0) {
             return *stopname_to_stops_.at(name);

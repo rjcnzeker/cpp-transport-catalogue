@@ -229,7 +229,7 @@ namespace json {
 
     void RequestHandler::ProcessBaseStopRequests(const vector <json::Node> &stops_requests) const {
         std::string name;
-        geo::Coordinates coordinates{};
+        geo::Coordinates coordinates(0.0, 0.0);
 
         for (const auto &stop : stops_requests) {
             auto stop_date = stop.AsMap();
@@ -250,26 +250,40 @@ namespace json {
         for (const auto &request : state_stops_requests) {
             auto request_data = request.AsMap();
             if (request_data.at("type") == "Stop") {
-
+                Stop stop = db_.GetStop(request_data.at("name").AsString());
+                if (stop.name_.empty()) {
+                    arr.emplace_back(Dict{
+                            {"request_id"s, request_data.at("id").AsInt()},
+                            {"error_message"s,  "not found"s} });
+                    continue;
+                }
                 std::set<string_view> buses_on_stop = db_.GetBusesOnStop(request_data.at("name").AsString());
                 vector<string> buses_on_stop_vect(buses_on_stop.begin(), buses_on_stop.end());
 
                 arr.emplace_back(Dict{
                         {"request_id"s, request_data.at("id").AsInt()},
-                        {"buses:"s,     Array{buses_on_stop_vect.begin(), buses_on_stop_vect.end()}}});
+                        {"buses"s,     Array{buses_on_stop_vect.begin(), buses_on_stop_vect.end()}}});
                 continue;
             }
             if (request_data.at("type") == "Bus") {
+
+
                 Bus bus = db_.GetBus(request_data.at("name").AsString());
+                if (bus.name_.empty()) {
+                    arr.emplace_back(Dict{
+                            {"request_id"s,       request_data.at("id").AsInt()},
+                            { "error_message"s,  "not found"s }});
+                    continue;
+                }
 
                 int stops = bus.there_and_back_ ? (bus.bus_stops_.size() * 2) - 1 : bus.bus_stops_.size();
 
                 arr.emplace_back(Dict{
                         {"request_id"s,       request_data.at("id").AsInt()},
                         {"curvature"s,        bus.curvature_},
-                        {"route_length:"s,    bus.distance_},
+                        {"route_length"s,    bus.distance_},
                         {"stop_count",        stops},
-                        {"unique_stop_count", bus.unique_stops_}});
+                        {"unique_stop_count", bus.unique_stops_}}); //TODO
             }
         }
 
