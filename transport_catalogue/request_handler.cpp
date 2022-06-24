@@ -253,7 +253,7 @@ namespace json {
                 Stop stop = db_.GetStop(request_data.at("name").AsString());
 
                 if (stop.name_.empty()) {
-                    arr.emplace_back(Dict{
+                    arr.push_back(Dict{
                             {"request_id"s,    request_data.at("id").AsInt()},
                             {"error_message"s, "not found"s}});
                     continue;
@@ -263,7 +263,7 @@ namespace json {
                 for (const auto bus : buses_on_stop) {
                     buses_on_stop_arr.push_back(static_cast<string>(bus));
                 }
-                arr.emplace_back(Dict{
+                arr.push_back(Dict{
                         {"buses"s,      buses_on_stop_arr},
                         {"request_id"s, request_data.at("id").AsInt()}
                 });
@@ -274,19 +274,19 @@ namespace json {
                 Bus bus = db_.GetBus(request_data.at("name").AsString());
 
                 if (bus.name_.empty()) {
-                    arr.emplace_back(Dict{
+                    arr.push_back(Dict{
                             {"request_id"s,    request_data.at("id").AsInt()},
                             {"error_message"s, "not found"s}});
                     continue;
                 }
 
                 int stops = bus.there_and_back_ ? (bus.bus_stops_.size() * 2) - 1 : bus.bus_stops_.size();
-                arr.emplace_back(Dict{
+                arr.push_back(Dict{
                         {"request_id"s,       request_data.at("id").AsInt()},
                         {"curvature"s,        bus.curvature_},
                         {"route_length"s,     bus.distance_},
                         {"stop_count",        stops},
-                        {"unique_stop_count", bus.unique_stops_}}); //TODO
+                        {"unique_stop_count", bus.unique_stops_}});
             }
         }
 
