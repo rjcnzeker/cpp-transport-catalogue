@@ -324,6 +324,22 @@ namespace json {
 
     //------------Node---------------
 
+    bool Node::IsNull() const {
+        return std::holds_alternative<std::nullptr_t>(*this);
+    }
+
+    bool Node::IsArray() const {
+        return std::holds_alternative<Array>(*this);
+    }
+
+    bool Node::IsMap() const {
+        return std::holds_alternative<Dict>(*this);
+    }
+
+    bool Node::IsInt() const {
+        return std::holds_alternative<int>(*this);
+    }
+
     bool Node::IsDouble() const {
         bool pd = IsPureDouble();
         if (pd) {
@@ -333,16 +349,29 @@ namespace json {
         return pd;
     }
 
-    bool Node::IsInt() const {
-        return std::holds_alternative<int>(*this);
+    bool Node::IsPureDouble() const {
+        return std::holds_alternative<double>(*this);
+    }
+
+    bool Node::IsBool() const {
+        return std::holds_alternative<bool>(*this);
+    }
+
+    bool Node::IsString() const {
+        return std::holds_alternative<std::string>(*this);
+    }
+
+
+    const Array &Node::AsArray() const {
+        return (!IsArray()) ? throw std::logic_error("Not a Array") : std::get<Array>(*this);
+    }
+
+    const Dict &Node::AsMap() const {
+        return (!IsMap()) ? throw std::logic_error("Not a dict") : std::get<Dict>(*this);
     }
 
     int Node::AsInt() const {
         return (!IsInt()) ? throw std::logic_error("Not a intager") : std::get<int>(*this);
-    }
-
-    bool Node::IsPureDouble() const {
-        return std::holds_alternative<double>(*this);
     }
 
     double Node::AsDouble() const {
@@ -350,40 +379,12 @@ namespace json {
                                                                                        : AsInt();
     }
 
-    bool Node::IsBool() const {
-        return std::holds_alternative<bool>(*this);
-    }
-
     bool Node::AsBool() const {
         return (!IsBool()) ? throw std::logic_error("Not a bool") : std::get<bool>(*this);
     }
 
-    bool Node::IsNull() const {
-        return std::holds_alternative<std::nullptr_t>(*this);
-    }
-
-    bool Node::IsArray() const {
-        return std::holds_alternative<Array>(*this);
-    }
-
-    const Array &Node::AsArray() const {
-        return (!IsArray()) ? throw std::logic_error("Not a Array") : std::get<Array>(*this);
-    }
-
-    bool Node::IsString() const {
-        return std::holds_alternative<std::string>(*this);
-    }
-
     const std::string &Node::AsString() const {
         return (!IsString()) ? throw std::logic_error("Not a string") : std::get<std::string>(*this);
-    }
-
-    bool Node::IsMap() const {
-        return std::holds_alternative<Dict>(*this);
-    }
-
-    const Dict &Node::AsMap() const {
-        return (!IsMap()) ? throw std::logic_error("Not a dict") : std::get<Dict>(*this);
     }
 
     bool Node::operator==(const Node &rhs) const {
