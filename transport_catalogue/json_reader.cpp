@@ -1,13 +1,13 @@
-#include <mmcobj.h>
 #include <deque>
 #include "json.h"
 #include "transport_catalogue.h"
-
+#include "json_reader.h"
 
 using namespace std;
 
 namespace json {
-    void ProcessBaseBusRequests(const vector <json::Node> &buses_requests, transport_catalogue::TransportCatalogue &catalogue) {
+    void ProcessBaseBusRequests(const vector <json::Node> &buses_requests,
+                                transport_catalogue::TransportCatalogue &catalogue) {
         std::string name;
         std::deque<std::string> stops;
         bool there_and_back;
@@ -22,7 +22,8 @@ namespace json {
         }
     }
 
-    void ProcessBaseStopRequests(const vector <json::Node> &stops_requests, transport_catalogue::TransportCatalogue &catalogue) {
+    void ProcessBaseStopRequests(const vector <json::Node> &stops_requests,
+                                 transport_catalogue::TransportCatalogue &catalogue) {
         std::string name;
         geo::Coordinates coordinates(0.0, 0.0);
 
@@ -40,7 +41,8 @@ namespace json {
         }
     }
 
-    Document ProcessStateRequests(const std::vector<Node> &state_stops_requests, transport_catalogue::TransportCatalogue &catalogue) {
+    Document ProcessStateRequests(const std::vector<Node> &state_stops_requests,
+                                  transport_catalogue::TransportCatalogue &catalogue) {
         Array arr;
         for (const auto &request : state_stops_requests) {
             auto request_data = request.AsMap();
@@ -49,18 +51,19 @@ namespace json {
 
                 if (stop.name_.empty()) {
                     arr.push_back(Dict{
-                            {"request_id"s,    request_data.at("id").AsInt()},
-                            {"error_message"s, "not found"s}});
+                            {"error_message", "not found"s},
+                            {"request_id",    request_data.at("id").AsInt()}
+                    });
                     continue;
                 }
-                std::set<string_view> buses_on_stop = catalogue.GetBusesOnStop(request_data.at("name").AsString());
-                Array buses_on_stop_arr;
-                for (const auto bus : buses_on_stop) {
-                    buses_on_stop_arr.push_back(static_cast<string>(bus));
+                std::set<string> buses_on_stop = catalogue.GetBusesOnStop(request_data.at("name").AsString());
+                Array buses_on_stop_arr = {};
+                for (const auto &bus : buses_on_stop) {
+                    buses_on_stop_arr.push_back(bus);
                 }
                 arr.push_back(Dict{
-                        {"buses"s,      buses_on_stop_arr},
-                        {"request_id"s, request_data.at("id").AsInt()}
+                        {"buses",      buses_on_stop_arr},
+                        {"request_id", request_data.at("id").AsInt()}
                 });
                 continue;
             }

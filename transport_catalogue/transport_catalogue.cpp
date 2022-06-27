@@ -98,23 +98,23 @@ namespace transport_catalogue {
     }
 
     Bus TransportCatalogue::GetBus(string_view name) {
-       // name.remove_prefix(4);
+        // name.remove_prefix(4);
         if (busname_to_buses_.count(name) != 0) {
             return *busname_to_buses_.at(name);
         }
         return Bus{};
     }
 
-    std::set<std::string_view> TransportCatalogue::GetBusesOnStop(const string& name) {
-        string_view name_view = name;
-       // name_view.remove_prefix(5);
+    std::set<std::string> TransportCatalogue::GetBusesOnStop(const string &name) {
+       // const string& name_view = name;
+        // name_view.remove_prefix(5);
 
-        set<string_view> buses_on_stop;
+        set<string> buses_on_stop;
 
         for (auto [name_bus, bus] : busname_to_buses_) {
             for (auto stop : bus->bus_stops_) {
-                if (stop->name_ == name_view) {
-                    buses_on_stop.insert(name_bus);
+                if (stop->name_ == name) {
+                    buses_on_stop.insert(string(name_bus));
                 }
             }
         }
@@ -133,7 +133,8 @@ namespace transport_catalogue {
     }
 
     size_t
-    TransportCatalogue::PairStopsHasher::operator()(const std::pair <std::string_view, std::string_view> &stops_pair) const {
+    TransportCatalogue::PairStopsHasher::operator()(
+            const std::pair<std::string_view, std::string_view> &stops_pair) const {
         std::string left_plus_right(stops_pair.first.substr(0));
         left_plus_right += stops_pair.second.substr(0);
 

@@ -25,7 +25,7 @@ namespace transport_catalogue {
 
         Bus GetBus(std::string_view name);
 
-        std::set<std::string_view> GetBusesOnStop(const std::string& name);
+        std::set<std::string> GetBusesOnStop(const std::string& name);
 
         Stop GetStop(std::string_view name);
 

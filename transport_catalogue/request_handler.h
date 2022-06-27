@@ -1,7 +1,5 @@
 #pragma once
 
-#pragma once
-
 #include <optional>
 #include <unordered_set>
 #include "transport_catalogue.h"
@@ -66,7 +64,7 @@ namespace json {
 
     // Возвращает маршруты, проходящие через
     const std::unordered_set<BusPtr>* GetBusesByStop(const std::string_view& stop_name) const;
-*/
+        */
         // Этот метод будет нужен в следующей части итогового проекта
         // svg::Document RenderMap() const;
 

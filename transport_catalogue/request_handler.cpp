@@ -132,7 +132,7 @@ namespace cin_output {
             return;
         }
 
-        set<string_view> buses_on_stop = transport_catalogue.GetBusesOnStop(name);
+        set<string> buses_on_stop = transport_catalogue.GetBusesOnStop(name);
 
         if (buses_on_stop.empty()) {
             output << "no buses" << '\n';
