@@ -175,8 +175,16 @@ namespace cin_output {
     }
 }// namespace cin_output_reader
 
+void RequestHandler::AddBus(std::string name, std::deque<std::string> stops, bool there_and_back) {
+    db_.AddBus(name, stops, there_and_back);
+}
+
 void RequestHandler::AddStop(std::string name, geo::Coordinates coordinates, const map<std::string, int> &distances) {
     db_.AddStop(name, coordinates, distances);
+}
+
+Bus RequestHandler::GetBus(const string &name) {
+    return db_.GetBus(name);
 }
 
 Stop RequestHandler::GetStop(const string &name) {
@@ -185,8 +193,4 @@ Stop RequestHandler::GetStop(const string &name) {
 
 std::set<std::string> RequestHandler::GetBusesOnStop(const string &name) {
     return db_.GetBusesOnStop(name);
-}
-
-Bus RequestHandler::GetBus(const string &name) {
-    return db_.GetBus(name);
 }

@@ -45,38 +45,30 @@ namespace cin_output {
     }
 }
 
+class RequestHandler {
+public:
+    // MapRenderer понадобится в следующей части итогового проекта
+    explicit RequestHandler(transport_catalogue::TransportCatalogue &db/*, const renderer::MapRenderer& renderer*/)
+            : db_(db) {}
 
+    void AddBus(std::string name, std::deque<std::string> stops, bool there_and_back);
 
-// Класс RequestHandler играет роль Фасада, упрощающего взаимодействие JSON reader-а
-// с другими подсистемами приложения.
-// См. паттерн проектирования Фасад: https://ru.wikipedia.org/wiki/Фасад_(шаблон_проектирования)
+    void AddStop(std::string name, geo::Coordinates coordinates, const std::map<std::string, int> &distances);
 
-    class RequestHandler {
-    public:
-        // MapRenderer понадобится в следующей части итогового проекта
-        explicit RequestHandler(transport_catalogue::TransportCatalogue &db/*, const renderer::MapRenderer& renderer*/)
-                : db_(db) {}
+    Bus GetBus(const std::string &name);
 
-        void AddBus(std::string name, std::deque<std::string> stops, bool there_and_back) {
-            db_.AddBus(name, stops, there_and_back);
-        }
+    Stop GetStop(const std::string &name);
 
-        void AddStop(std::string name, geo::Coordinates coordinates, const std::map<std::string, int>& distances);
+    std::set<std::string> GetBusesOnStop(const std::string &name);
 
-        Stop GetStop(const std::string &name);
+    // Этот метод будет нужен в следующей части итогового проекта
+    // svg::Document RenderMap() const;
+private:
+    // RequestHandler использует агрегацию объектов "Транспортный Справочник" и "Визуализатор Карты"
+    //const renderer::MapRenderer& renderer_;
 
-        std::set<std::string> GetBusesOnStop(const std::string &name);
-
-        Bus GetBus(const std::string &name);
-
-        // Этот метод будет нужен в следующей части итогового проекта
-        // svg::Document RenderMap() const;
-    private:
-        // RequestHandler использует агрегацию объектов "Транспортный Справочник" и "Визуализатор Карты"
-        //const renderer::MapRenderer& renderer_;
-
-        transport_catalogue::TransportCatalogue &db_;
-    };
+    transport_catalogue::TransportCatalogue &db_;
+};
 
 
 
