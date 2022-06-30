@@ -8,12 +8,12 @@
 
 
 namespace json {
-Document ProcessRequests(std::istream &input, transport_catalogue::TransportCatalogue &catalogue);
+    Document ProcessRequests(std::istream &input, transport_catalogue::TransportCatalogue &catalogue);
 
-void ProcessBaseBusRequests(const std::vector<json::Node> &buses_requests);
+    void ProcessBaseBusRequests(const std::vector<json::Node> &buses_requests);
 
-void ProcessBaseStopRequests(const std::vector<Node> &stops_requests);
+    void ProcessBaseStopRequests(const std::vector<Node> &stops_requests);
 
 //const renderer::MapRenderer& renderer_;
-Document ProcessStateRequests(const std::vector<Node> &state_stops_requests);
-};
+    Document ProcessStateRequests(const std::vector<Node> &state_stops_requests);
+}

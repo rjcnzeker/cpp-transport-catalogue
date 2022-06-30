@@ -55,11 +55,11 @@ namespace json {
 
         bool operator==(const Node &rhs) const;
 
+        bool operator!=(const Node &rhs) const;
+
     };
 
-    inline bool operator!=(const Node &lhs, const Node &rhs) {
-        return !(lhs == rhs);
-    }
+
 
     class Document {
     public:

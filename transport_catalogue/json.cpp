@@ -361,7 +361,6 @@ namespace json {
         return std::holds_alternative<std::string>(*this);
     }
 
-
     const Array &Node::AsArray() const {
         return (!IsArray()) ? throw std::logic_error("Not a Array") : std::get<Array>(*this);
     }
@@ -387,8 +386,17 @@ namespace json {
         return (!IsString()) ? throw std::logic_error("Not a string") : std::get<std::string>(*this);
     }
 
-    bool Node::operator==(const Node &rhs) const {
-        return GetValue() == rhs.GetValue();
+    bool Node::operator==(const Node &right) const {
+        if (typeid(this->GetValue()) == typeid(right.GetValue())) {
+            if (this->GetValue() == right.GetValue()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    bool Node::operator!=(const Node &rhs) const {
+        return !(GetValue() == rhs);
     }
 
     const Node::Value &Node::GetValue() const {

@@ -9,15 +9,18 @@ namespace json {
     void ProcessBaseBusRequests(const std::vector <json::Node> &buses_requests,
                                 transport_catalogue::TransportCatalogue &catalogue) {
         std::string name;
-        std::deque<std::string> stops;
+
         bool there_and_back;
         for (const auto &bus : buses_requests) {
             auto bus_date = bus.AsMap();
             name = bus_date.at("name"s).AsString();
             there_and_back = !bus_date.at("is_roundtrip"s).AsBool();
+
+            std::deque<std::string> stops;
             for (const auto &stop : bus_date.at("stops"s).AsArray()) {
                 stops.emplace_back(stop.AsString());
             }
+
             catalogue.AddBus(name, stops, there_and_back);
         }
     }
@@ -98,7 +101,6 @@ namespace json {
         std::vector<json::Node> base_requests_stops;
 
         std::vector<json::Node> stat_requests;
-        std::vector<json::Node> stat_requests_buses;
 
         for (const auto &node : document.GetRoot().AsMap()) {
             if (node.first == "base_requests"s) {
