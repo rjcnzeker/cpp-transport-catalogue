@@ -2,9 +2,11 @@
 
 #include <optional>
 #include <unordered_set>
+
 #include "transport_catalogue.h"
 #include "domain.h"
 #include "json.h"
+#include "map_renderer.h"
 
 namespace cin_input {
 
@@ -65,7 +67,7 @@ public:
     // svg::Document RenderMap() const;
 private:
     // RequestHandler использует агрегацию объектов "Транспортный Справочник" и "Визуализатор Карты"
-    //const renderer::MapRenderer& renderer_;
+   // const renderer::MapRenderer &renderer_;
 
     transport_catalogue::TransportCatalogue &db_;
 };

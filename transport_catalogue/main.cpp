@@ -12,7 +12,10 @@ using namespace transport_catalogue;
 int main() {
     auto catalogue = make_unique<TransportCatalogue>();
     auto request_handler = make_unique<RequestHandler>(*catalogue);
+    auto map_renderer = make_unique<renderer::MapRenderer>();
+
     auto json_reader = json::JsonReader(*request_handler);
+
 
     istream &input = cin;
     json::Document out = json_reader.ProcessRequests(input);
