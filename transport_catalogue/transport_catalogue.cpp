@@ -132,6 +132,10 @@ namespace transport_catalogue {
         return Stop{};
     }
 
+    vector <Bus> TransportCatalogue::GetBuses() {
+        return {buses_.begin(), buses_.end()};
+    }
+
     size_t
     TransportCatalogue::PairStopsHasher::operator()(
             const std::pair<std::string_view, std::string_view> &stops_pair) const {

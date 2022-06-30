@@ -16,7 +16,7 @@ namespace json {
 
         vector<Node> stat_requests;
 
-        vector<Node> render_requests;
+        Node render_requests;
 
 
         for (const auto &node : document.GetRoot().AsMap()) {
@@ -34,9 +34,9 @@ namespace json {
                     stat_requests.push_back(request);
                 }
             } else if (node.first == "render_settings") {
-                for (const auto &request : node.second.AsArray()) {
-                    render_requests.push_back(request);
-                }
+
+                    render_requests = node.second;
+
             }
         }
 
@@ -135,33 +135,58 @@ namespace json {
         return Document{arr};
     }
 
-    void JsonReader::ProcessRenderRequests(std::vector<Node> render_requests) {
-        /*{
-      "width": 1200.0,
-      "height": 1200.0,
+    void JsonReader::ProcessRenderRequests(Node &render_requests) {
+          Dict render_data = render_requests.AsMap();
 
-      "padding": 50.0,
+        mr_.width_ = render_data.at("width").AsDouble();
+        mr_.height_ = render_data.at("height").AsDouble();
+        mr_.padding_ = render_data.at("padding").AsDouble();
+        mr_.line_width_ = render_data.at("line_width").AsDouble();
+        mr_.stop_radius_ = render_data.at("stop_radius").AsDouble();
+        mr_.bus_label_font_size_ = render_data.at("bus_label_font_size").AsInt();
 
-      "line_width": 14.0,
-      "stop_radius": 5.0,
+        svg::Point bus_label_offset;
+        mr_.bus_label_offset_.x = render_data.at("bus_label_offset").AsArray()[0].AsDouble();
+        mr_.bus_label_offset_.y = render_data.at("bus_label_offset").AsArray()[1].AsDouble();
 
-      "bus_label_font_size": 20,
-      "bus_label_offset": [7.0, 15.0],
+        mr_.stop_label_font_size_ = render_data.at("stop_label_font_size").AsInt();
 
-      "stop_label_font_size": 20,
-      "stop_label_offset": [7.0, -3.0],
+        svg::Point stop_label_offset;
+        mr_.stop_label_offset_.x = render_data.at("stop_label_offset").AsArray()[0].AsDouble();
+        mr_.stop_label_offset_.y = render_data.at("stop_label_offset").AsArray()[1].AsDouble();
 
-      "underlayer_color": [255, 255, 255, 0.85],
-      "underlayer_width": 3.0,
+        mr_.underlayer_color_ = InputColor(render_data.at("underlayer_color"));
 
-      "color_palette": [
-        "green",
-        [255, 160, 0],
-        "red"
-      ]
-    } */
+        mr_.underlayer_width_ = render_data.at("underlayer_width").AsDouble();
 
+        std::vector<svg::Color> color_palette;
+        for (auto color_node : render_data.at("color_palette").AsArray()) {
+            mr_.color_palette_.push_back(InputColor(color_node));
+        }
 
+    }
+
+     svg::Color JsonReader::InputColor(Node &color_node) {
+        if (color_node.IsArray()) {
+            auto color_array = color_node.AsArray();
+            if (color_array.size() == 3) {
+                svg::Rgb rgb;
+                rgb.red = color_array[0].AsInt();
+                rgb.green = color_array[1].AsInt();
+                rgb.blue = color_array[2].AsInt();
+                return rgb;
+            } else {
+                svg::Rgba rgba;
+                rgba.red = color_array[0].AsInt();
+                rgba.green = color_array[1].AsInt();
+                rgba.blue = color_array[2].AsInt();
+                rgba.opacity = color_array[3].AsDouble();
+                return rgba;
+            }
+        } else if (color_node.IsString()) {
+            return color_node.AsString();
+        }
+        return "black";
     }
 
 }

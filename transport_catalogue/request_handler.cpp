@@ -175,11 +175,11 @@ namespace cin_output {
     }
 }// namespace cin_output_reader
 
-void RequestHandler::AddBus(std::string name, std::deque<std::string> stops, bool there_and_back) {
+void RequestHandler::AddBus(string name, deque<string> stops, bool there_and_back) {
     db_.AddBus(name, stops, there_and_back);
 }
 
-void RequestHandler::AddStop(std::string name, geo::Coordinates coordinates, const map<std::string, int> &distances) {
+void RequestHandler::AddStop(string name, geo::Coordinates coordinates, const map<string, int> &distances) {
     db_.AddStop(name, coordinates, distances);
 }
 
@@ -191,6 +191,61 @@ Stop RequestHandler::GetStop(const string &name) {
     return db_.GetStop(name);
 }
 
-std::set<std::string> RequestHandler::GetBusesOnStop(const string &name) {
+set<string> RequestHandler::GetBusesOnStop(const string &name) {
     return db_.GetBusesOnStop(name);
 }
+
+vector<Bus> RequestHandler::GetBuses() const {
+    return db_.GetBuses();
+}
+
+void RequestHandler::RenderMap(svg::Document &doc) const {
+
+    vector<Bus> buses = GetBuses();
+    vector<vector<geo::Coordinates>> geo_coords(buses.size());
+    int count = 0;
+    for (const Bus &bus : buses) {
+        for (auto &stop : bus.bus_stops_) {
+            geo_coords[count].push_back(stop->coordinates_);
+        }
+        ++count;
+    }
+
+    vector<vector<svg::Point>> screen_coords(geo_coords.size());
+
+    count = 0;
+    for (auto bus_stops_coords : geo_coords) {
+        const renderer::SphereProjector proj{
+                bus_stops_coords.begin(), bus_stops_coords.end(), renderer_.width_, renderer_.height_,
+                renderer_.padding_
+        };
+        for (const auto geo_coord : bus_stops_coords) {
+            const svg::Point screen_coord = proj(geo_coord);
+            screen_coords[count].push_back(screen_coord);
+        }
+        ++count;
+    }
+
+    count = 0;
+    for (const vector<svg::Point> &points : screen_coords) {
+        svg::Polyline line{};
+        if (!buses[count].there_and_back_) {
+            for (const auto& point : points) {
+                line.AddPoint(point);
+            }
+
+        } else {
+            for (const auto& point : points) {
+                line.AddPoint(point);
+            }
+            for (auto i = points.rbegin() + 1; i < points.rend(); ++i) {
+                line.AddPoint(*i);
+            }
+
+        }
+        doc.Add(line);
+        ++count;
+    }
+}
+
+

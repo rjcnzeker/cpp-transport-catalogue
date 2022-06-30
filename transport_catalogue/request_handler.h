@@ -50,8 +50,8 @@ namespace cin_output {
 class RequestHandler {
 public:
     // MapRenderer понадобится в следующей части итогового проекта
-    explicit RequestHandler(transport_catalogue::TransportCatalogue &db/*, const renderer::MapRenderer& renderer*/)
-            : db_(db) {}
+    RequestHandler(transport_catalogue::TransportCatalogue &db, const renderer::MapRenderer& renderer)
+            : db_(db), renderer_(renderer) {}
 
     void AddBus(std::string name, std::deque<std::string> stops, bool there_and_back);
 
@@ -63,11 +63,13 @@ public:
 
     std::set<std::string> GetBusesOnStop(const std::string &name);
 
+    std::vector <Bus> GetBuses() const;
+
     // Этот метод будет нужен в следующей части итогового проекта
-    // svg::Document RenderMap() const;
+     void RenderMap(svg::Document &doc) const;
 private:
     // RequestHandler использует агрегацию объектов "Транспортный Справочник" и "Визуализатор Карты"
-   // const renderer::MapRenderer &renderer_;
+    const renderer::MapRenderer &renderer_;
 
     transport_catalogue::TransportCatalogue &db_;
 };

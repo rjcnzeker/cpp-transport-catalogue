@@ -29,6 +29,8 @@ namespace transport_catalogue {
 
         Stop GetStop(std::string_view name);
 
+        std::vector<Bus> GetBuses();
+
     private:
 
         struct PairStopsHasher {

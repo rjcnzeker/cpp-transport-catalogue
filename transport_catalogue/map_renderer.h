@@ -10,10 +10,13 @@
 #include <utility>
 #include <vector>
 
+namespace renderer {
+
 inline const double EPSILON = 1e-6;
-bool IsZero(double value) {
+/*
+bool Is_Zero(double value) {
     return std::abs(value) < EPSILON;
-}
+}*/
 
 class SphereProjector {
 public:
@@ -44,13 +47,13 @@ public:
 
         // Вычисляем коэффициент масштабирования вдоль координаты x
         std::optional<double> width_zoom;
-        if (!IsZero(max_lon - min_lon_)) {
+        if (!(std::abs(max_lon - min_lon_) < EPSILON)) {
             width_zoom = (max_width - 2 * padding) / (max_lon - min_lon_);
         }
 
         // Вычисляем коэффициент масштабирования вдоль координаты y
         std::optional<double> height_zoom;
-        if (!IsZero(max_lat_ - min_lat)) {
+        if (!std::abs(max_lat_ - min_lat) < EPSILON) {
             height_zoom = (max_height - 2 * padding) / (max_lat_ - min_lat);
         }
 
@@ -79,13 +82,9 @@ private:
 
 
 
-namespace renderer {
     class MapRenderer {
+
     public:
-
-
-    private:
-
         double width_;
         double height_;
         double padding_;
@@ -96,7 +95,7 @@ namespace renderer {
         int stop_label_font_size_;
         svg::Point stop_label_offset_;
         svg::Color underlayer_color_;
-        int underlayer_width_;
+        double underlayer_width_;
         std::vector<svg::Color> color_palette_;
 
     };
