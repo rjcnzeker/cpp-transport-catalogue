@@ -5,15 +5,28 @@
 #include "json.h"
 #include "geo.h"
 #include "transport_catalogue.h"
+#include "request_handler.h"
 
 
 namespace json {
-    Document ProcessRequests(std::istream &input, transport_catalogue::TransportCatalogue &catalogue);
+    class JsonReader {
 
-    void ProcessBaseBusRequests(const std::vector<json::Node> &buses_requests);
+    public:
 
-    void ProcessBaseStopRequests(const std::vector<Node> &stops_requests);
+        explicit JsonReader(RequestHandler &request_handler) : rh_(request_handler) {
+        }
 
-//const renderer::MapRenderer& renderer_;
-    Document ProcessStateRequests(const std::vector<Node> &state_stops_requests);
+        Document ProcessRequests(std::istream &input);
+
+    private:
+        void ProcessBaseBusRequests(const std::vector<json::Node> &buses_requests);
+
+        void ProcessBaseStopRequests(const std::vector<json::Node> &stops_requests);
+
+        Document ProcessStateRequests(const std::vector<Node> &state_stops_requests);
+
+        RequestHandler &rh_;
+    };
+
+
 }

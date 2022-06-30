@@ -175,9 +175,18 @@ namespace cin_output {
     }
 }// namespace cin_output_reader
 
-namespace json {
+void RequestHandler::AddStop(std::string name, geo::Coordinates coordinates, const map<std::string, int> &distances) {
+    db_.AddStop(name, coordinates, distances);
+}
 
-} // namespace json
+Stop RequestHandler::GetStop(const string &name) {
+    return db_.GetStop(name);
+}
 
+std::set<std::string> RequestHandler::GetBusesOnStop(const string &name) {
+    return db_.GetBusesOnStop(name);
+}
 
-
+Bus RequestHandler::GetBus(const string &name) {
+    return db_.GetBus(name);
+}

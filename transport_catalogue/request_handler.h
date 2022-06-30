@@ -51,27 +51,32 @@ namespace cin_output {
 // с другими подсистемами приложения.
 // См. паттерн проектирования Фасад: https://ru.wikipedia.org/wiki/Фасад_(шаблон_проектирования)
 
-namespace json {
     class RequestHandler {
     public:
         // MapRenderer понадобится в следующей части итогового проекта
         explicit RequestHandler(transport_catalogue::TransportCatalogue &db/*, const renderer::MapRenderer& renderer*/)
                 : db_(db) {}
 
-/*
-    // Возвращает информацию о маршруте (запрос Buss)
-    std::optional<Bus> GetBusStat(const std::string_view& bus_name) const;
+        void AddBus(std::string name, std::deque<std::string> stops, bool there_and_back) {
+            db_.AddBus(name, stops, there_and_back);
+        }
 
-    // Возвращает маршруты, проходящие через
-    const std::unordered_set<BusPtr>* GetBusesByStop(const std::string_view& stop_name) const;
-        */
+        void AddStop(std::string name, geo::Coordinates coordinates, const std::map<std::string, int>& distances);
+
+        Stop GetStop(const std::string &name);
+
+        std::set<std::string> GetBusesOnStop(const std::string &name);
+
+        Bus GetBus(const std::string &name);
+
         // Этот метод будет нужен в следующей части итогового проекта
         // svg::Document RenderMap() const;
-
     private:
         // RequestHandler использует агрегацию объектов "Транспортный Справочник" и "Визуализатор Карты"
+        //const renderer::MapRenderer& renderer_;
+
         transport_catalogue::TransportCatalogue &db_;
     };
-}
+
 
 
