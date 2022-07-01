@@ -45,6 +45,9 @@ namespace renderer {
         void PrintLines(svg::Document &doc, const std::set<Bus, BusComparator> &buses,
                         const std::vector<std::vector<svg::Point>> &buses_screen_coords) const;
 
+        void PrintBusesNames(svg::Document &doc, std::set <Bus, BusComparator> &buses,
+                             const std::vector<std::vector<svg::Point>> &buses_screen_coords) const;
+
         double width_;
         double height_;
         double padding_;
@@ -56,7 +59,13 @@ namespace renderer {
         svg::Point stop_label_offset_;
         svg::Color underlayer_color_;
         double underlayer_width_;
+
         std::vector<svg::Color> color_palette_;
 
+        void PrintCircles(svg::Document &doc, const SphereProjector &proj,
+                          std::set<Stop *, StopComparator> &all_stops) const;
+
+        void PrintStopsNames(svg::Document &doc, const SphereProjector &proj,
+                             std::set<Stop *, StopComparator> &all_stops) const;
     };
 }

@@ -100,16 +100,20 @@ namespace renderer {
 
         //Выводим линии
         PrintLines(doc, buses, buses_screen_coords);
-/*
-        //Вывод кружочков остановок
-        for (const auto &buss_points : buses_screen_coords) {
-            for (const auto &point : buss_points) {
-                svg::Circle stop_circle(point, stop_radius_);
-                stop_circle.SetFillColor("white");
-                doc.Add(stop_circle);
+
+        PrintBusesNames(doc, buses, buses_screen_coords);
+
+        //Все остановки
+        set<Stop *, StopComparator> all_stops;
+        for (const auto &bus : buses) {
+            for (Stop *stop : bus.bus_stops_) {
+                all_stops.insert(stop);
             }
         }
-*/
+
+        PrintCircles(doc, proj, all_stops);
+
+        PrintStopsNames(doc, proj, all_stops);
 
     }
 
@@ -150,5 +154,97 @@ namespace renderer {
             ++color_count;
         }
     }
+
+    void MapRenderer::PrintBusesNames(svg::Document &doc, set <Bus, BusComparator> &buses,
+                                      const vector <vector<svg::Point>> &buses_screen_coords) const {
+        int text_count = 0;
+        int text_color_count = 0;
+        for (const auto &bus : buses) {
+            if (text_color_count == static_cast<int>(color_palette_.size())) text_color_count = 0;
+
+            svg::Text text;
+
+            text.
+                    SetPosition(*buses_screen_coords[text_count].begin()).
+                    SetOffset(bus_label_offset_).
+                    SetFontSize(bus_label_font_size_).
+                    SetFontFamily("Verdana").
+                    SetFontWeight("bold").
+                    SetData(bus.name_);
+
+            svg::Text under_text = text;
+
+            text.SetFillColor(color_palette_[text_color_count]);
+
+            under_text.
+                    SetFillColor(underlayer_color_).
+                    SetStrokeColor(underlayer_color_).
+                    SetStrokeWidth(underlayer_width_).
+                    SetStrokeLineCap(svg::StrokeLineCap::ROUND).
+                    SetStrokeLineJoin(svg::StrokeLineJoin::ROUND);
+
+
+            doc.Add(under_text);
+            doc.Add(text);
+
+            // если маршрут не кольцевой и конечные не совпадают
+            if (bus.there_and_back_ && *bus.bus_stops_.begin() != *bus.bus_stops_.rbegin()) {
+                svg::Text text_second = text;
+                text_second.SetPosition(*buses_screen_coords[text_count].rbegin());
+                svg::Text under_text_second = under_text;
+                under_text_second.SetPosition(*buses_screen_coords[text_count].rbegin());
+
+                doc.Add(under_text_second);
+                doc.Add(text_second);
+            }
+
+            ++text_count;
+            ++text_color_count;
+        }
+    }
+
+    void MapRenderer::PrintCircles(svg::Document &doc, const SphereProjector &proj,
+                                   set<Stop *, StopComparator> &all_stops) const {
+        for (const Stop *stop : all_stops) {
+            const svg::Point screen_coord = proj(stop->coordinates_);
+            svg::Circle stop_circle(screen_coord, stop_radius_);
+            stop_circle.SetFillColor("white");
+            doc.Add(stop_circle);
+        }
+    }
+
+    void
+    MapRenderer::PrintStopsNames(svg::Document &doc, const SphereProjector &proj,
+                                 set<Stop *, StopComparator> &all_stops) const {
+        for (const Stop *stop : all_stops) {
+            svg::Text text;
+
+            const svg::Point screen_coord = proj(stop->coordinates_);
+
+            //Общие свойства текста и подложки
+            text.
+                    SetPosition(screen_coord).
+                    SetOffset(stop_label_offset_).
+                    SetFontSize(stop_label_font_size_).
+                    SetFontFamily("Verdana").
+                    SetFontWeight("bold").
+                    SetData(stop->name_);
+
+            svg::Text under_text = text;
+
+            text.SetFillColor("black");
+
+            under_text.
+                    SetFillColor(underlayer_color_).
+                    SetStrokeColor(underlayer_color_).
+                    SetStrokeWidth(underlayer_width_).
+                    SetStrokeLineCap(svg::StrokeLineCap::ROUND).
+                    SetStrokeLineJoin(svg::StrokeLineJoin::ROUND);
+
+            doc.Add(under_text);
+            doc.Add(text);
+        }
+    }
+
 
 } //namespace renderer
