@@ -63,7 +63,7 @@ public:
 
     std::set<std::string> GetBusesOnStop(const std::string &name);
 
-    std::vector <Bus> GetBuses() const;
+    std::set <Bus, BusComparator> GetBuses() const;
 
     // Этот метод будет нужен в следующей части итогового проекта
      void RenderMap(svg::Document &doc) const;

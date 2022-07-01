@@ -106,7 +106,7 @@ namespace transport_catalogue {
     }
 
     std::set<std::string> TransportCatalogue::GetBusesOnStop(const string &name) {
-       // const string& name_view = name;
+        // const string& name_view = name;
         // name_view.remove_prefix(5);
 
         set<string> buses_on_stop;
@@ -132,8 +132,12 @@ namespace transport_catalogue {
         return Stop{};
     }
 
-    vector <Bus> TransportCatalogue::GetBuses() {
-        return {buses_.begin(), buses_.end()};
+    set<Bus, BusComparator> TransportCatalogue::GetBuses() {
+        set<Bus, BusComparator> result;
+        for (const Bus& bus : buses_) {
+            result.insert(bus);
+        }
+        return result;
     }
 
     size_t

@@ -29,7 +29,7 @@ namespace transport_catalogue {
 
         Stop GetStop(std::string_view name);
 
-        std::vector<Bus> GetBuses();
+        std::set<Bus, BusComparator> GetBuses();
 
     private:
 
