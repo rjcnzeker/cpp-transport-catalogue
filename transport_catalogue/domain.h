@@ -26,8 +26,8 @@ struct Bus {
 
 };
 struct BusComparator {
-    bool operator()(const Bus& lhs, const Bus& rhs) const {
-        return lhs.name_ < rhs.name_;
+    bool operator()(const Bus* lhs, const Bus* rhs) const {
+        return lhs->name_ < rhs->name_;
     }
 };
 

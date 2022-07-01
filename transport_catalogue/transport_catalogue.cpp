@@ -132,10 +132,10 @@ namespace transport_catalogue {
         return Stop{};
     }
 
-    set<Bus, BusComparator> TransportCatalogue::GetBuses() {
-        set<Bus, BusComparator> result;
-        for (const Bus& bus : buses_) {
-            result.insert(bus);
+    set<const Bus*, BusComparator> TransportCatalogue::GetBuses() {
+        set<const Bus*, BusComparator> result;
+        for (pair<const basic_string_view<char>, const Bus *> bus : busname_to_buses_) {
+            result.insert(bus.second);
         }
         return result;
     }

@@ -195,13 +195,13 @@ set<string> RequestHandler::GetBusesOnStop(const string &name) {
     return db_.GetBusesOnStop(name);
 }
 
-set<Bus, BusComparator> RequestHandler::GetBuses() const {
+set<const Bus*, BusComparator> RequestHandler::GetBuses() const {
     return db_.GetBuses();
 }
 
 void RequestHandler::RenderMap(svg::Document &doc) const {
 
-    set<Bus, BusComparator> buses = GetBuses();
+    set<const Bus*, BusComparator> buses = GetBuses();
     renderer_.Render(doc, buses);
 
 }
