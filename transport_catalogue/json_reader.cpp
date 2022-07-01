@@ -186,7 +186,7 @@ namespace json {
         } else if (color_node.IsString()) {
             return color_node.AsString();
         }
-        return "black";
+        return "none";
     }
 
 }

@@ -16,62 +16,16 @@ namespace renderer {
 
     inline const double EPSILON = 1e-6;
 
-/*
-bool Is_Zero(double value) {
-    return std::abs(value) < EPSILON;
-}*/
+    inline bool IsZero(double value) {
+        return std::abs(value) < EPSILON;
+    }
 
     class SphereProjector {
     public:
         // points_begin и points_end задают начало и конец интервала элементов geo::Coordinates
         template<typename PointInputIt>
         SphereProjector(PointInputIt points_begin, PointInputIt points_end,
-                        double max_width, double max_height, double padding)
-                : padding_(padding) //
-        {
-            // Если точки поверхности сферы не заданы, вычислять нечего
-            if (points_begin == points_end) {
-                return;
-            }
-
-            // Находим точки с минимальной и максимальной долготой
-            const auto [left_it, right_it] = std::minmax_element(
-                    points_begin, points_end,
-                    [](auto lhs, auto rhs) { return lhs.lng < rhs.lng; });
-            min_lon_ = left_it->lng;
-            const double max_lon = right_it->lng;
-
-            // Находим точки с минимальной и максимальной широтой
-            const auto [bottom_it, top_it] = std::minmax_element(
-                    points_begin, points_end,
-                    [](auto lhs, auto rhs) { return lhs.lat < rhs.lat; });
-            const double min_lat = bottom_it->lat;
-            max_lat_ = top_it->lat;
-
-            // Вычисляем коэффициент масштабирования вдоль координаты x
-            std::optional<double> width_zoom;
-            if (!(std::abs(max_lon - min_lon_) < EPSILON)) {
-                width_zoom = (max_width - 2 * padding) / (max_lon - min_lon_);
-            }
-
-            // Вычисляем коэффициент масштабирования вдоль координаты y
-            std::optional<double> height_zoom;
-            if (!std::abs(max_lat_ - min_lat) < EPSILON) {
-                height_zoom = (max_height - 2 * padding) / (max_lat_ - min_lat);
-            }
-
-            if (width_zoom && height_zoom) {
-                // Коэффициенты масштабирования по ширине и высоте ненулевые,
-                // берём минимальный из них
-                zoom_coeff_ = std::min(*width_zoom, *height_zoom);
-            } else if (width_zoom) {
-                // Коэффициент масштабирования по ширине ненулевой, используем его
-                zoom_coeff_ = *width_zoom;
-            } else if (height_zoom) {
-                // Коэффициент масштабирования по высоте ненулевой, используем его
-                zoom_coeff_ = *height_zoom;
-            }
-        }
+                        double max_width, double max_height, double padding);
 
         // Проецирует широту и долготу в координаты внутри SVG-изображения
         svg::Point operator()(geo::Coordinates coords) const;
@@ -83,13 +37,13 @@ bool Is_Zero(double value) {
         double zoom_coeff_ = 0;
     };
 
-
     class MapRenderer {
-
     public:
 
         void Render(svg::Document &doc, std::set<Bus, BusComparator> &buses) const;
 
+        void PrintLines(svg::Document &doc, const std::set<Bus, BusComparator> &buses,
+                        const std::vector<std::vector<svg::Point>> &buses_screen_coords) const;
 
         double width_;
         double height_;
@@ -104,7 +58,5 @@ bool Is_Zero(double value) {
         double underlayer_width_;
         std::vector<svg::Color> color_palette_;
 
-        void PrintLines(svg::Document &doc, const std::set<Bus, BusComparator> &buses,
-                        const std::vector<std::vector<svg::Point>> &buses_screen_coords) const;
     };
 }
