@@ -16,13 +16,10 @@ int main() {
 
     auto json_reader = json::JsonReader(*request_handler, *map_renderer);
 
-
     istream &input = cin;
     json::Document out = json_reader.ProcessRequests(input);
-    svg::Document map;
-    request_handler->RenderMap(map);
 
-    map.Render(cout);
+    Print(out,cout);
 
     return 0;
 }

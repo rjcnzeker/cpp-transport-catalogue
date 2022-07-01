@@ -18,6 +18,7 @@ namespace json {
 
         Node render_requests;
 
+        vector<Node> map_requests;
 
         for (const auto &node : document.GetRoot().AsMap()) {
             if (node.first == "base_requests"s) {
@@ -34,9 +35,9 @@ namespace json {
                     stat_requests.push_back(request);
                 }
             } else if (node.first == "render_settings") {
-
-                    render_requests = node.second;
-
+                render_requests = node.second;
+            } else if (node.first == "render_settings") {
+                map_requests.push_back(node.second);
             }
         }
 
@@ -49,7 +50,7 @@ namespace json {
         return ProcessStateRequests(stat_requests);
     }
 
-    void JsonReader::ProcessBaseBusRequests(const vector<Node> &buses_requests) {
+    void JsonReader::ProcessBaseBusRequests(const vector <Node> &buses_requests) {
         string name;
 
         bool there_and_back;
@@ -67,7 +68,7 @@ namespace json {
         }
     }
 
-    void JsonReader::ProcessBaseStopRequests(const vector<Node> &stops_requests) {
+    void JsonReader::ProcessBaseStopRequests(const vector <Node> &stops_requests) {
         string name;
         geo::Coordinates coordinates(0.0, 0.0);
 
@@ -85,7 +86,7 @@ namespace json {
         }
     }
 
-    Document JsonReader::ProcessStateRequests(const vector<Node> &state_stops_requests) {
+    Document JsonReader::ProcessStateRequests(const vector <Node> &state_stops_requests) {
         Array arr;
         for (const auto &request : state_stops_requests) {
             auto request_data = request.AsMap();
@@ -129,6 +130,20 @@ namespace json {
                         {"route_length"s,      bus.distance_},
                         {"stop_count"s,        stops},
                         {"unique_stop_count"s, bus.unique_stops_}});
+                continue;
+            }
+
+            if (request_data.at("type"s) == "Map"s) {
+                svg::Document doc;
+                rh_.RenderMap(doc);
+
+                ostringstream string_stream;
+                doc.Render(string_stream);
+
+                arr.push_back(Dict{
+                        {"request_id"s,        request_data.at("id"s).AsInt()},
+                        {"map"s,         string_stream.str()}});
+
             }
         }
 
@@ -136,7 +151,7 @@ namespace json {
     }
 
     void JsonReader::ProcessRenderRequests(Node &render_requests) {
-          Dict render_data = render_requests.AsMap();
+        Dict render_data = render_requests.AsMap();
 
         mr_.width_ = render_data.at("width").AsDouble();
         mr_.height_ = render_data.at("height").AsDouble();
@@ -166,7 +181,7 @@ namespace json {
 
     }
 
-     svg::Color JsonReader::InputColor(Node &color_node) {
+    svg::Color JsonReader::InputColor(Node &color_node) {
         if (color_node.IsArray()) {
             auto color_array = color_node.AsArray();
             if (color_array.size() == 3) {
