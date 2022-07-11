@@ -16,10 +16,10 @@ int main() {
 
     auto json_reader = json::JsonReader(*request_handler, *map_renderer);
 
-    istream &input = cin;
+    istream& input = cin;
     json::Document out = json_reader.ProcessRequests(input);
 
-    Print(out,cout);
+    Print(out, cout);
 
     return 0;
 }

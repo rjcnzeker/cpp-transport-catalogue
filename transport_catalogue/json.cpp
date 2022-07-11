@@ -8,6 +8,7 @@ namespace json {
         using namespace std::literals;
 
         Node LoadNode(std::istream& input);
+
         Node LoadString(std::istream& input);
 
         std::string LoadLiteral(std::istream& input) {
@@ -240,7 +241,7 @@ namespace json {
 
         void PrintNode(const Node& value, const PrintContext& ctx);
 
-        template <typename Value>
+        template<typename Value>
         void PrintValue(const Value& value, const PrintContext& ctx) {
             ctx.out << value;
         }
@@ -269,26 +270,22 @@ namespace json {
             out.put('"');
         }
 
-        template <>
+        template<>
         void PrintValue<std::string>(const std::string& value, const PrintContext& ctx) {
             PrintString(value, ctx.out);
         }
 
-        template <>
+        template<>
         void PrintValue<std::nullptr_t>(const std::nullptr_t&, const PrintContext& ctx) {
             ctx.out << "null"sv;
         }
 
-// В специализаци шаблона PrintValue для типа bool параметр value передаётся
-// по константной ссылке, как и в основном шаблоне.
-// В качестве альтернативы можно использовать перегрузку:
-// void PrintValue(bool value, const PrintContext& ctx);
-        template <>
+        template<>
         void PrintValue<bool>(const bool& value, const PrintContext& ctx) {
             ctx.out << (value ? "true"sv : "false"sv);
         }
 
-        template <>
+        template<>
         void PrintValue<Array>(const Array& nodes, const PrintContext& ctx) {
             std::ostream& out = ctx.out;
             out << "[\n"sv;
@@ -308,7 +305,7 @@ namespace json {
             out.put(']');
         }
 
-        template <>
+        template<>
         void PrintValue<Dict>(const Dict& nodes, const PrintContext& ctx) {
             std::ostream& out = ctx.out;
             out << "{\n"sv;

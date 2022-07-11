@@ -29,11 +29,11 @@ namespace svg {
  * Вспомогательная структура, хранящая контекст для вывода SVG-документа с отступами.
  * Хранит ссылку на поток вывода, текущее значение и шаг отступа при выводе элемента */
     struct RenderContext {
-        RenderContext(std::ostream &out)
+        RenderContext(std::ostream& out)
                 : out(out) {
         }
 
-        RenderContext(std::ostream &out, int indent_step, int indent = 0)
+        RenderContext(std::ostream& out, int indent_step, int indent = 0)
                 : out(out), indent_step(indent_step), indent(indent) {
         }
 
@@ -47,7 +47,7 @@ namespace svg {
             }
         }
 
-        std::ostream &out;
+        std::ostream& out;
         int indent_step = 0;
         int indent = 0;
     };
@@ -76,7 +76,7 @@ namespace svg {
     inline const Color NoneColor{};
 
     struct ColorPrinter {
-        std::ostream &out;
+        std::ostream& out;
 
         void operator()(std::monostate) const;
 
@@ -87,7 +87,7 @@ namespace svg {
         void operator()(svg::Rgba color) const;
     };
 
-    inline std::ostream &operator<<(std::ostream &out, svg::Color color) {
+    inline std::ostream& operator<<(std::ostream& out, svg::Color color) {
         std::visit(ColorPrinter{out}, color);
         return out;
     }
@@ -98,7 +98,7 @@ namespace svg {
         SQUARE,
     };
 
-    inline std::ostream &operator<<(std::ostream &out, svg::StrokeLineCap value) {
+    inline std::ostream& operator<<(std::ostream& out, svg::StrokeLineCap value) {
         switch (value) {
             case StrokeLineCap::BUTT :
                 return out << "butt"sv;
@@ -119,7 +119,7 @@ namespace svg {
         ROUND,
     };
 
-    inline std::ostream &operator<<(std::ostream &out, StrokeLineJoin value) {
+    inline std::ostream& operator<<(std::ostream& out, StrokeLineJoin value) {
         switch (value) {
             case StrokeLineJoin::ARCS:
                 return out << "arcs"sv;
@@ -139,26 +139,26 @@ namespace svg {
     template<typename Owner>
     class PathProps {
     public:
-        Owner &SetFillColor(Color fill_color);
+        Owner& SetFillColor(Color fill_color);
 
-        Owner &SetStrokeColor(Color stroke_color);
+        Owner& SetStrokeColor(Color stroke_color);
 
-        Owner &SetStrokeWidth(double width);
+        Owner& SetStrokeWidth(double width);
 
-        Owner &SetStrokeLineCap(StrokeLineCap line_cap);
+        Owner& SetStrokeLineCap(StrokeLineCap line_cap);
 
-        Owner &SetStrokeLineJoin(StrokeLineJoin line_join);
+        Owner& SetStrokeLineJoin(StrokeLineJoin line_join);
 
         virtual ~PathProps() = default;
 
     protected:
 
-        void RenderAttrs(std::ostream &out) const;
+        void RenderAttrs(std::ostream& out) const;
 
     private:
 
-        Owner &AsOwner() {
-            return static_cast<Owner &>(*this);
+        Owner& AsOwner() {
+            return static_cast<Owner&>(*this);
         }
 
         std::optional<Color> fill_color_;
@@ -175,12 +175,12 @@ namespace svg {
  */
     class Object {
     public:
-        void Render(const RenderContext &context) const;
+        void Render(const RenderContext& context) const;
 
         virtual ~Object() = default;
 
     private:
-        virtual void RenderObject(const RenderContext &context) const = 0;
+        virtual void RenderObject(const RenderContext& context) const = 0;
     };
 
 /*
@@ -191,15 +191,15 @@ namespace svg {
     public:
         Circle() = default;
 
-        Circle(const Point &center, double radius) : center_(center), radius_(radius) {
+        Circle(const Point& center, double radius) : center_(center), radius_(radius) {
         }
 
-        Circle &SetCenter(Point center);
+        Circle& SetCenter(Point center);
 
-        Circle &SetRadius(double radius);
+        Circle& SetRadius(double radius);
 
     private:
-        void RenderObject(const RenderContext &context) const override;
+        void RenderObject(const RenderContext& context) const override;
 
         Point center_;
         double radius_ = 1.0;
@@ -214,10 +214,10 @@ namespace svg {
         Polyline() = default;
 
         // Добавляет очередную вершину к ломаной линии
-        Polyline &AddPoint(Point point);
+        Polyline& AddPoint(Point point);
 
     private:
-        void RenderObject(const RenderContext &context) const override;
+        void RenderObject(const RenderContext& context) const override;
 
         std::vector<Point> points_ = {};
     };
@@ -231,26 +231,26 @@ namespace svg {
         Text() = default;
 
         // Задаёт координаты опорной точки (атрибуты x и y)
-        Text &SetPosition(Point pos);
+        Text& SetPosition(Point pos);
 
         // Задаёт смещение относительно опорной точки (атрибуты dx, dy)
-        Text &SetOffset(Point offset);
+        Text& SetOffset(Point offset);
 
         // Задаёт размеры шрифта (атрибут font-size)
-        Text &SetFontSize(uint32_t size);
+        Text& SetFontSize(uint32_t size);
 
         // Задаёт название шрифта (атрибут font-family)
-        Text &SetFontFamily(std::string font_family);
+        Text& SetFontFamily(std::string font_family);
 
         // Задаёт толщину шрифта (атрибут font-weight)
-        Text &SetFontWeight(std::string font_weight);
+        Text& SetFontWeight(std::string font_weight);
 
         // Задаёт текстовое содержимое объекта (отображается внутри тега text)
-        Text &SetData(const std::string &data);
+        Text& SetData(const std::string& data);
 
     private:
 
-        void RenderObject(const RenderContext &context) const override;
+        void RenderObject(const RenderContext& context) const override;
 
         Point position_;
         Point offset_;
@@ -265,7 +265,7 @@ namespace svg {
 
     class Drawable {
     public:
-        virtual void Draw(ObjectContainer &obj_container) const = 0;
+        virtual void Draw(ObjectContainer& obj_container) const = 0;
 
         virtual ~Drawable() = default;
     };
@@ -276,7 +276,7 @@ namespace svg {
         template<typename T>
         void Add(T obj);
 
-        virtual void AddPtr(std::unique_ptr<Object> &&obj) = 0;
+        virtual void AddPtr(std::unique_ptr<Object>&& obj) = 0;
 
         ~ObjectContainer() = default;
 
@@ -287,10 +287,10 @@ namespace svg {
     class Document final : public ObjectContainer {
     public:
         // Добавляет в svg-документ объект-наследник svg::Object
-        void AddPtr(std::unique_ptr<Object> &&obj) override;
+        void AddPtr(std::unique_ptr<Object>&& obj) override;
 
         // Выводит в ostream svg-представление документа
-        void Render(std::ostream &out) const;
+        void Render(std::ostream& out) const;
     };
 
     template<typename T>
@@ -301,37 +301,37 @@ namespace svg {
     //------------- PathProps -------------
 
     template<typename Owner>
-    Owner &PathProps<Owner>::SetFillColor(Color fill_color) {
+    Owner& PathProps<Owner>::SetFillColor(Color fill_color) {
         fill_color_ = std::move(fill_color);
         return AsOwner();
     }
 
     template<typename Owner>
-    Owner &PathProps<Owner>::SetStrokeColor(Color stroke_color) {
+    Owner& PathProps<Owner>::SetStrokeColor(Color stroke_color) {
         stroke_color_ = std::move(stroke_color);
         return AsOwner();
     }
 
     template<typename Owner>
-    Owner &PathProps<Owner>::SetStrokeWidth(double width) {
+    Owner& PathProps<Owner>::SetStrokeWidth(double width) {
         stroke_width_ = width;
         return AsOwner();
     }
 
     template<typename Owner>
-    Owner &PathProps<Owner>::SetStrokeLineCap(StrokeLineCap line_cap) {
+    Owner& PathProps<Owner>::SetStrokeLineCap(StrokeLineCap line_cap) {
         stroke_line_cap_ = line_cap;
         return AsOwner();
     }
 
     template<typename Owner>
-    Owner &PathProps<Owner>::SetStrokeLineJoin(StrokeLineJoin line_join) {
+    Owner& PathProps<Owner>::SetStrokeLineJoin(StrokeLineJoin line_join) {
         stroke_line_join_ = line_join;
         return AsOwner();
     }
 
     template<typename Owner>
-    void PathProps<Owner>::RenderAttrs(std::ostream &out) const {
+    void PathProps<Owner>::RenderAttrs(std::ostream& out) const {
         if (fill_color_) {
             out << " fill=\""sv << *fill_color_ << "\""sv;
         }

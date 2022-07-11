@@ -5,12 +5,14 @@ set(CMAKE_CXX_STANDARD 17)
 
 include_directories(.)
 
-add_executable(domain.cpp
-        domain.h
+add_executable(domain.h
+        domain.cpp
         geo.cpp
         geo.h
         json.cpp
         json.h
+        json_builder.cpp
+        json_builder.h
         json_reader.cpp
         json_reader.h
         main.cpp

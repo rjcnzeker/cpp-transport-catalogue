@@ -10,20 +10,20 @@ using namespace std;
 
 namespace transport_catalogue {
 
-    void TransportCatalogue::AddStop(std::string &name, geo::Coordinates coordinates,
-                                     const map<string, int> &distances) {
+    void TransportCatalogue::AddStop(std::string& name, geo::Coordinates coordinates,
+                                     const map<string, int>& distances) {
         Stop stop;
         stop.name_ = name;
         stop.coordinates_ = coordinates;
         stops_.emplace_back(stop);
         stopname_to_stops_[(stops_.end() - 1)->name_] = &*(stops_.end() - 1);
 
-        for (const auto &pair_stops : distances) {
+        for (const auto& pair_stops : distances) {
             distances_.insert({{(stops_.end() - 1)->name_, pair_stops.first}, pair_stops.second});
         }
     }
 
-    void TransportCatalogue::AddBus(std::string &name, const std::deque<std::string> &stops, bool there_and_back) {
+    void TransportCatalogue::AddBus(std::string& name, const std::deque<std::string>& stops, bool there_and_back) {
         Bus bus;
         bus.name_ = name;
 
@@ -105,10 +105,7 @@ namespace transport_catalogue {
         return Bus{};
     }
 
-    std::set<std::string> TransportCatalogue::GetBusesOnStop(const string &name) {
-        // const string& name_view = name;
-        // name_view.remove_prefix(5);
-
+    std::set<std::string> TransportCatalogue::GetBusesOnStop(const string& name) {
         set<string> buses_on_stop;
 
         for (auto [name_bus, bus] : busname_to_buses_) {
@@ -119,13 +116,10 @@ namespace transport_catalogue {
             }
         }
 
-
         return buses_on_stop;
     }
 
     Stop TransportCatalogue::GetStop(string_view name) {
-        //name.remove_prefix(5);
-
         if (stopname_to_stops_.count(name) != 0) {
             return *stopname_to_stops_.at(name);
         }
@@ -134,7 +128,7 @@ namespace transport_catalogue {
 
     set<const Bus*, BusComparator> TransportCatalogue::GetBuses() {
         set<const Bus*, BusComparator> result;
-        for (pair<const basic_string_view<char>, const Bus *> bus : busname_to_buses_) {
+        for (pair<const basic_string_view<char>, const Bus*> bus : busname_to_buses_) {
             result.insert(bus.second);
         }
         return result;
@@ -142,11 +136,11 @@ namespace transport_catalogue {
 
     size_t
     TransportCatalogue::PairStopsHasher::operator()(
-            const std::pair<std::string_view, std::string_view> &stops_pair) const {
+            const std::pair<std::string_view, std::string_view>& stops_pair) const {
         std::string left_plus_right(stops_pair.first.substr(0));
         left_plus_right += stops_pair.second.substr(0);
 
         return d_hasher_(left_plus_right);
     }
 
-}
+} // namespace transport_catalogue

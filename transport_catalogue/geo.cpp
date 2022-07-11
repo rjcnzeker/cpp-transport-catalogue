@@ -6,11 +6,11 @@
 
 namespace geo {
 
-    bool Coordinates::operator==(const Coordinates &other) const {
+    bool Coordinates::operator==(const Coordinates& other) const {
         return lat == other.lat && lng == other.lng;
     }
 
-    bool Coordinates::operator!=(const Coordinates &other) const {
+    bool Coordinates::operator!=(const Coordinates& other) const {
         return !(*this == other);
     }
 
@@ -24,6 +24,5 @@ namespace geo {
                     + cos(from.lat * dr) * cos(to.lat * dr) * cos(abs(from.lng - to.lng) * dr))
                * EARTH_RADIUS;
     }
-
 
 }  // namespace geo

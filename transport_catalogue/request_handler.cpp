@@ -10,7 +10,7 @@ using namespace std;
 
 namespace cin_input {
 
-    InputReader::InputReader(int number_requests, istream &input) : request_queue_() {
+    InputReader::InputReader(int number_requests, istream& input) : request_queue_() {
         for (int i = 0; i < number_requests; ++i) {
             string line;
             getline(input, line);
@@ -39,7 +39,7 @@ namespace cin_input {
         return transport_catalogue;
     }
 
-    void InputReader::ProcessBuses(transport_catalogue::TransportCatalogue &transport_catalogue, string_view &request) {
+    void InputReader::ProcessBuses(transport_catalogue::TransportCatalogue& transport_catalogue, string_view& request) {
         string bus_name = string(request.substr(0, request.find_first_of(':')));
         request.remove_prefix(request.find_first_not_of(' ', bus_name.size() + 1));
 
@@ -65,7 +65,7 @@ namespace cin_input {
         transport_catalogue.AddBus(bus_name, stops, there_and_back);
     }
 
-    void InputReader::ProcessStops(transport_catalogue::TransportCatalogue &transport_catalogue, string_view &request) {
+    void InputReader::ProcessStops(transport_catalogue::TransportCatalogue& transport_catalogue, string_view& request) {
         string stop_name = string(request.substr(0, request.find_first_of(':')));
         request.remove_prefix(request.find_first_not_of(' ', stop_name.size() + 1));
 
@@ -106,9 +106,9 @@ namespace cin_input {
 
 namespace cin_output {
 
-    void ReadQuery(int num_queries, transport_catalogue::TransportCatalogue &transport_catalogue, istream &input) {
+    void ReadQuery(int num_queries, transport_catalogue::TransportCatalogue& transport_catalogue, istream& input) {
 
-        ostream &output = cout;
+        ostream& output = cout;
 
         for (int i = 0; i < num_queries; ++i) {
             string line;
@@ -124,7 +124,7 @@ namespace cin_output {
         }
     }
 
-    void print::Stop(string &name, transport_catalogue::TransportCatalogue &transport_catalogue, ostream &output) {
+    void print::Stop(string& name, transport_catalogue::TransportCatalogue& transport_catalogue, ostream& output) {
         output << name << ": ";
 
         if (transport_catalogue.GetStop(name).name_.empty()) {
@@ -149,7 +149,7 @@ namespace cin_output {
     }
 
     void
-    print::Buss(const string &name, transport_catalogue::TransportCatalogue &transport_catalogue, ostream &output) {
+    print::Buss(const string& name, transport_catalogue::TransportCatalogue& transport_catalogue, ostream& output) {
 
         output << name << ": "s;
         Bus bus = transport_catalogue.GetBus(name);
@@ -179,19 +179,19 @@ void RequestHandler::AddBus(string name, deque<string> stops, bool there_and_bac
     db_.AddBus(name, stops, there_and_back);
 }
 
-void RequestHandler::AddStop(string name, geo::Coordinates coordinates, const map<string, int> &distances) {
+void RequestHandler::AddStop(string name, geo::Coordinates coordinates, const map<string, int>& distances) {
     db_.AddStop(name, coordinates, distances);
 }
 
-Bus RequestHandler::GetBus(const string &name) {
+Bus RequestHandler::GetBus(const string& name) {
     return db_.GetBus(name);
 }
 
-Stop RequestHandler::GetStop(const string &name) {
+Stop RequestHandler::GetStop(const string& name) {
     return db_.GetStop(name);
 }
 
-set<string> RequestHandler::GetBusesOnStop(const string &name) {
+set<string> RequestHandler::GetBusesOnStop(const string& name) {
     return db_.GetBusesOnStop(name);
 }
 
@@ -199,11 +199,9 @@ set<const Bus*, BusComparator> RequestHandler::GetBuses() const {
     return db_.GetBuses();
 }
 
-void RequestHandler::RenderMap(svg::Document &doc) const {
+void RequestHandler::RenderMap(svg::Document& doc) const {
 
     set<const Bus*, BusComparator> buses = GetBuses();
     renderer_.Render(doc, buses);
 
 }
-
-

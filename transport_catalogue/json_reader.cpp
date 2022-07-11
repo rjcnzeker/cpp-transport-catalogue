@@ -2,12 +2,13 @@
 #include "json.h"
 #include "transport_catalogue.h"
 #include "json_reader.h"
+#include "json_builder.h"
 
 using namespace std;
 
 namespace json {
 
-    Document JsonReader::ProcessRequests(istream &input) {
+    Document JsonReader::ProcessRequests(istream& input) {
 
         Document document(Load(input));
 
@@ -20,9 +21,9 @@ namespace json {
 
         vector<Node> map_requests;
 
-        for (const auto &node : document.GetRoot().AsDict()) {
+        for (const auto& node : document.GetRoot().AsDict()) {
             if (node.first == "base_requests"s) {
-                for (const auto &request : node.second.AsArray()) {
+                for (const auto& request : node.second.AsArray()) {
                     if (request.AsDict().at("type"s) == "Bus"s) {
                         base_requests_buses.push_back(request);
                     } else if (request.AsDict().at("type"s) == "Stop"s) {
@@ -31,7 +32,7 @@ namespace json {
                 }
                 continue;
             } else if (node.first == "stat_requests"s) {
-                for (const auto &request : node.second.AsArray()) {
+                for (const auto& request : node.second.AsArray()) {
                     stat_requests.push_back(request);
                 }
             } else if (node.first == "render_settings") {
@@ -50,17 +51,17 @@ namespace json {
         return ProcessStateRequests(stat_requests);
     }
 
-    void JsonReader::ProcessBaseBusRequests(const vector <Node> &buses_requests) {
+    void JsonReader::ProcessBaseBusRequests(const vector <Node>& buses_requests) {
         string name;
 
         bool there_and_back;
-        for (const auto &bus : buses_requests) {
+        for (const auto& bus : buses_requests) {
             auto bus_date = bus.AsDict();
             name = bus_date.at("name"s).AsString();
             there_and_back = !bus_date.at("is_roundtrip"s).AsBool();
 
             deque<string> stops;
-            for (const auto &stop : bus_date.at("stops"s).AsArray()) {
+            for (const auto& stop : bus_date.at("stops"s).AsArray()) {
                 stops.emplace_back(stop.AsString());
             }
 
@@ -68,17 +69,17 @@ namespace json {
         }
     }
 
-    void JsonReader::ProcessBaseStopRequests(const vector <Node> &stops_requests) {
+    void JsonReader::ProcessBaseStopRequests(const vector <Node>& stops_requests) {
         string name;
         geo::Coordinates coordinates(0.0, 0.0);
 
-        for (const auto &stop : stops_requests) {
+        for (const auto& stop : stops_requests) {
             auto stop_date = stop.AsDict();
             name = stop_date.at("name"s).AsString();
             coordinates.lng = stop_date.at("longitude"s).AsDouble();
             coordinates.lat = stop_date.at("latitude"s).AsDouble();
             map<string, int> distances{};
-            for (auto &stop_distance : stop_date.at("road_distances"s).AsDict()) {
+            for (auto& stop_distance : stop_date.at("road_distances"s).AsDict()) {
                 distances[stop_distance.first] = stop_distance.second.AsInt();
             }
 
@@ -86,32 +87,32 @@ namespace json {
         }
     }
 
-    Document JsonReader::ProcessStateRequests(const vector <Node> &state_stops_requests) {
+    Document JsonReader::ProcessStateRequests(const vector <Node>& state_stops_requests) {
         Array arr;
-        //TODO
 
-        for (const auto &request : state_stops_requests) {
+        for (const auto& request : state_stops_requests) {
             auto request_data = request.AsDict();
             if (request_data.at("type"s) == "Stop"s) {
                 Stop stop = rh_.GetStop(request_data.at("name"s).AsString());
 
                 if (stop.name_.empty()) {
-                    arr.push_back(Dict{
-                            {"error_message"s, "not found"s},
-                            {"request_id"s,    request_data.at("id"s).AsInt()}
-                    });
+                    arr.push_back(Builder{}.StartDict()
+                                          .Key("error_message"s).Value("not found"s)
+                                          .Key("request_id"s).Value(request_data.at("id"s).AsInt())
+                                          .EndDict()
+                                          .Build());
                     continue;
                 }
                 set<string> buses_on_stop = rh_.GetBusesOnStop(
                         request_data.at("name"s).AsString());
                 Array buses_on_stop_arr = {};
-                for (const auto &bus : buses_on_stop) {
+                for (const auto& bus : buses_on_stop) {
                     buses_on_stop_arr.push_back(bus);
                 }
-                arr.push_back(Dict{
-                        {"buses"s,      buses_on_stop_arr},
-                        {"request_id"s, request_data.at("id"s).AsInt()}
-                });
+                arr.push_back(Builder{}.StartDict()
+                                      .Key("buses"s).Value(buses_on_stop_arr)
+                                      .Key("request_id"s).Value(request_data.at("id"s).AsInt())
+                                      .EndDict().Build());
                 continue;
             }
 
@@ -119,19 +120,26 @@ namespace json {
                 Bus bus = rh_.GetBus(request_data.at("name"s).AsString());
 
                 if (bus.name_.empty()) {
-                    arr.push_back(Dict{
-                            {"request_id"s,    request_data.at("id"s).AsInt()},
-                            {"error_message"s, "not found"s}});
+                    arr.push_back(Builder{}.
+                                    StartDict()
+                                          .Key("request_id"s).Value(request_data.at("id"s).AsInt())
+                                          .Key("error_message"s).Value("not found"s)
+                                          .EndDict()
+                                          .Build());
                     continue;
                 }
 
                 int stops = bus.there_and_back_ ? (bus.bus_stops_.size() * 2) - 1 : bus.bus_stops_.size();
-                arr.push_back(Dict{
-                        {"request_id"s,        request_data.at("id"s).AsInt()},
-                        {"curvature"s,         bus.curvature_},
-                        {"route_length"s,      bus.distance_},
-                        {"stop_count"s,        stops},
-                        {"unique_stop_count"s, bus.unique_stops_}});
+
+                arr.push_back(Builder{}.
+                                StartDict()
+                                      .Key("request_id"s).Value(request_data.at("id"s).AsInt())
+                                      .Key("curvature"s).Value(bus.curvature_)
+                                      .Key("route_length"s).Value(bus.distance_)
+                                      .Key("stop_count"s).Value(stops)
+                                      .Key("unique_stop_count"s).Value(bus.unique_stops_)
+                                      .EndDict()
+                                      .Build());
                 continue;
             }
 
@@ -142,17 +150,19 @@ namespace json {
                 ostringstream string_stream;
                 doc.Render(string_stream);
 
-                arr.push_back(Dict{
-                        {"request_id"s,        request_data.at("id"s).AsInt()},
-                        {"map"s,         string_stream.str()}});
-
+                arr.push_back(Builder{}
+                                      .StartDict()
+                                      .Key("request_id"s).Value(request_data.at("id"s).AsInt())
+                                      .Key("map"s).Value(string_stream.str())
+                                      .EndDict()
+                                      .Build());
             }
         }
 
-        return Document{arr};
+        return json::Document{arr};
     }
 
-    void JsonReader::ProcessRenderRequests(Node &render_requests) {
+    void JsonReader::ProcessRenderRequests(Node& render_requests) {
         Dict render_data = render_requests.AsDict();
 
         mr_.width_ = render_data.at("width").AsDouble();
@@ -183,7 +193,7 @@ namespace json {
 
     }
 
-    svg::Color JsonReader::InputColor(Node &color_node) {
+    svg::Color JsonReader::InputColor(Node& color_node) {
         if (color_node.IsArray()) {
             auto color_array = color_node.AsArray();
             if (color_array.size() == 3) {

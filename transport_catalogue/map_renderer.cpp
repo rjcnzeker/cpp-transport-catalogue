@@ -1,10 +1,5 @@
 #include "map_renderer.h"
 
-/*
- * В этом файле вы можете разместить код, отвечающий за визуализацию карты маршрутов в формате SVG.
- * Визуализация маршрутов вам понадобится во второй части итогового проекта.
- * Пока можете оставить файл пустым.
- */
 using namespace std;
 
 namespace renderer {
@@ -65,7 +60,7 @@ namespace renderer {
         }
     }
 
-    void MapRenderer::Render(svg::Document &doc, std::set<const Bus*, BusComparator> &buses) const {
+    void MapRenderer::Render(svg::Document& doc, std::set<const Bus*, BusComparator>& buses) const {
 
         vector<vector<geo::Coordinates>> geo_coords_buses(buses.size());
         vector<geo::Coordinates> geo_coords;
@@ -73,7 +68,7 @@ namespace renderer {
         //Распределяем координаты по автобусам, и делаем один контейнер со всеми
         int count = 0;
         for (const Bus* bus : buses) {
-            for (const auto &stop : bus->bus_stops_) {
+            for (const auto& stop : bus->bus_stops_) {
                 geo_coords_buses[count].push_back(stop->coordinates_);
                 geo_coords.push_back(stop->coordinates_);
             }
@@ -90,7 +85,7 @@ namespace renderer {
 
         //Координаты по автобусам преобразуем в точки на экране
         count = 0;
-        for (const auto &bus_stops_coords : geo_coords_buses) {
+        for (const auto& bus_stops_coords : geo_coords_buses) {
             for (const auto geo_coord : bus_stops_coords) {
                 const svg::Point screen_coord = proj(geo_coord);
                 buses_screen_coords[count].push_back(screen_coord);
@@ -104,9 +99,9 @@ namespace renderer {
         PrintBusesNames(doc, buses, buses_screen_coords);
 
         //Все остановки
-        set<Stop *, StopComparator> all_stops;
-        for (const auto &bus : buses) {
-            for (Stop *stop : bus->bus_stops_) {
+        set<Stop*, StopComparator> all_stops;
+        for (const auto& bus : buses) {
+            for (Stop* stop : bus->bus_stops_) {
                 all_stops.insert(stop);
             }
         }
@@ -118,11 +113,11 @@ namespace renderer {
     }
 
     //Вывод линий
-    void MapRenderer::PrintLines(svg::Document &doc, const std::set<const Bus*, BusComparator> &buses,
-                                 const std::vector<std::vector<svg::Point>> &buses_screen_coords) const {
+    void MapRenderer::PrintLines(svg::Document& doc, const std::set<const Bus*, BusComparator>& buses,
+                                 const std::vector<std::vector<svg::Point>>& buses_screen_coords) const {
         int count = 0;
         int color_count = 0;
-        for (const auto &bus : buses) {
+        for (const auto& bus : buses) {
             if (bus->bus_stops_.empty()) {
                 continue;
             }
@@ -137,11 +132,11 @@ namespace renderer {
                     SetStrokeLineCap(svg::StrokeLineCap::ROUND).
                     SetStrokeLineJoin(svg::StrokeLineJoin::ROUND);
             if (!bus->there_and_back_) {
-                for (const auto &point : buses_screen_coords[count]) {
+                for (const auto& point : buses_screen_coords[count]) {
                     line.AddPoint(point);
                 }
             } else {
-                for (const auto &point : buses_screen_coords[count]) {
+                for (const auto& point : buses_screen_coords[count]) {
                     line.AddPoint(point);
                 }
                 for (auto i = buses_screen_coords[count].rbegin() + 1;
@@ -155,11 +150,11 @@ namespace renderer {
         }
     }
 
-    void MapRenderer::PrintBusesNames(svg::Document &doc, std::set <const Bus*, BusComparator> &buses,
-                                      const std::vector <std::vector<svg::Point>> &buses_screen_coords) const {
+    void MapRenderer::PrintBusesNames(svg::Document& doc, std::set<const Bus*, BusComparator>& buses,
+                                      const std::vector<std::vector<svg::Point>>& buses_screen_coords) const {
         int text_count = 0;
         int text_color_count = 0;
-        for (const auto &bus : buses) {
+        for (const auto& bus : buses) {
             if (text_color_count == static_cast<int>(color_palette_.size())) text_color_count = 0;
 
             svg::Text text;
@@ -203,9 +198,9 @@ namespace renderer {
         }
     }
 
-    void MapRenderer::PrintCircles(svg::Document &doc, const SphereProjector &proj,
-                                   set<Stop *, StopComparator> &all_stops) const {
-        for (const Stop *stop : all_stops) {
+    void MapRenderer::PrintCircles(svg::Document& doc, const SphereProjector& proj,
+                                   set<Stop*, StopComparator>& all_stops) const {
+        for (const Stop* stop : all_stops) {
             const svg::Point screen_coord = proj(stop->coordinates_);
             svg::Circle stop_circle(screen_coord, stop_radius_);
             stop_circle.SetFillColor("white");
@@ -214,9 +209,9 @@ namespace renderer {
     }
 
     void
-    MapRenderer::PrintStopsNames(svg::Document &doc, const SphereProjector &proj,
-                                 set<Stop *, StopComparator> &all_stops) const {
-        for (const Stop *stop : all_stops) {
+    MapRenderer::PrintStopsNames(svg::Document& doc, const SphereProjector& proj,
+                                 set<Stop*, StopComparator>& all_stops) const {
+        for (const Stop* stop : all_stops) {
             svg::Text text;
 
             const svg::Point screen_coord = proj(stop->coordinates_);
@@ -244,6 +239,5 @@ namespace renderer {
             doc.Add(text);
         }
     }
-
 
 } //namespace renderer

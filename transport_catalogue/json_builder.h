@@ -2,28 +2,31 @@
 
 #include "json.h"
 
-namespace json
-{
+namespace json {
 
     class KeyContext;
+
     class DictItemContext;
+
     class ArrayItemContext;
 
     //---------Builder----------------
 
-    class Builder
-    {
+    class Builder {
     public:
 
         Builder();
 
         virtual DictItemContext StartDict();
+
         virtual ArrayItemContext StartArray();
 
         virtual Builder& EndDict();
+
         virtual Builder& EndArray();
 
         virtual KeyContext Key(std::string key);
+
         Builder& Value(Node value);
 
         virtual Node Build();
@@ -36,8 +39,7 @@ namespace json
 
     //------------KeyContext------------------
 
-    class KeyContext final : Builder
-    {
+    class KeyContext final : Builder {
     public:
 
         KeyContext(Builder&& builder);
@@ -55,8 +57,7 @@ namespace json
 
     //---------------DictItemContext-------------------
 
-    class DictItemContext final : Builder
-    {
+    class DictItemContext final : Builder {
     public:
 
         DictItemContext(Builder&& builder);
@@ -72,8 +73,7 @@ namespace json
 
     //-----------ArrayItemContext----------------------
 
-    class ArrayItemContext final : Builder
-    {
+    class ArrayItemContext final : Builder {
     public:
 
         ArrayItemContext(Builder&& builder);

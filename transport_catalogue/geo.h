@@ -7,7 +7,6 @@ namespace geo {
     const int EARTH_RADIUS = 6371000;
 
     struct Coordinates {
-
         double lat;
         double lng;
 
@@ -16,9 +15,9 @@ namespace geo {
 
         Coordinates() = default;
 
-        bool operator==(const Coordinates &other) const;
+        bool operator==(const Coordinates& other) const;
 
-        bool operator!=(const Coordinates &other) const;
+        bool operator!=(const Coordinates& other) const;
     };
 
     double ComputeDistance(Coordinates from, Coordinates to);
