@@ -20,12 +20,12 @@ namespace json {
 
         vector<Node> map_requests;
 
-        for (const auto &node : document.GetRoot().AsMap()) {
+        for (const auto &node : document.GetRoot().AsDict()) {
             if (node.first == "base_requests"s) {
                 for (const auto &request : node.second.AsArray()) {
-                    if (request.AsMap().at("type"s) == "Bus"s) {
+                    if (request.AsDict().at("type"s) == "Bus"s) {
                         base_requests_buses.push_back(request);
-                    } else if (request.AsMap().at("type"s) == "Stop"s) {
+                    } else if (request.AsDict().at("type"s) == "Stop"s) {
                         base_requests_stops.push_back(request);
                     }
                 }
@@ -55,7 +55,7 @@ namespace json {
 
         bool there_and_back;
         for (const auto &bus : buses_requests) {
-            auto bus_date = bus.AsMap();
+            auto bus_date = bus.AsDict();
             name = bus_date.at("name"s).AsString();
             there_and_back = !bus_date.at("is_roundtrip"s).AsBool();
 
@@ -73,12 +73,12 @@ namespace json {
         geo::Coordinates coordinates(0.0, 0.0);
 
         for (const auto &stop : stops_requests) {
-            auto stop_date = stop.AsMap();
+            auto stop_date = stop.AsDict();
             name = stop_date.at("name"s).AsString();
             coordinates.lng = stop_date.at("longitude"s).AsDouble();
             coordinates.lat = stop_date.at("latitude"s).AsDouble();
             map<string, int> distances{};
-            for (auto &stop_distance : stop_date.at("road_distances"s).AsMap()) {
+            for (auto &stop_distance : stop_date.at("road_distances"s).AsDict()) {
                 distances[stop_distance.first] = stop_distance.second.AsInt();
             }
 
@@ -88,8 +88,10 @@ namespace json {
 
     Document JsonReader::ProcessStateRequests(const vector <Node> &state_stops_requests) {
         Array arr;
+        //TODO
+
         for (const auto &request : state_stops_requests) {
-            auto request_data = request.AsMap();
+            auto request_data = request.AsDict();
             if (request_data.at("type"s) == "Stop"s) {
                 Stop stop = rh_.GetStop(request_data.at("name"s).AsString());
 
@@ -151,7 +153,7 @@ namespace json {
     }
 
     void JsonReader::ProcessRenderRequests(Node &render_requests) {
-        Dict render_data = render_requests.AsMap();
+        Dict render_data = render_requests.AsDict();
 
         mr_.width_ = render_data.at("width").AsDouble();
         mr_.height_ = render_data.at("height").AsDouble();
