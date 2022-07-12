@@ -62,7 +62,7 @@ namespace json {
 
         DictItemContext(Builder&& builder);
 
-        KeyContext Key(std::string key);
+        KeyContext Key(const std::string& key);
 
         Builder& EndDict() override;
 

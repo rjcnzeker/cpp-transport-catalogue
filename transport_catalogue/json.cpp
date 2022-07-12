@@ -439,8 +439,8 @@ namespace json {
     }
     // ------------- Document -----------
 
-    Document::Document(Node root) {
-
+    Document::Document(Node root)
+            : root_(std::move(root)) {
     }
 
     const Node& Document::GetRoot() const {

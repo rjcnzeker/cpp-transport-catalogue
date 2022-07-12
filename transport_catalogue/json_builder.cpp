@@ -83,7 +83,7 @@ namespace json {
     DictItemContext::DictItemContext(Builder&& builder)
             : builder_(builder) {}
 
-    KeyContext DictItemContext::Key(string key) {
+    KeyContext DictItemContext::Key(const string& key) {
         return move(builder_.Key(move(key)));
     }
 
