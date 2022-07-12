@@ -1,6 +1,9 @@
 #include "json_builder.h"
 
+using namespace std;
+
 namespace json {
+
     //------------------Builder----------------------------
 
     Builder::Builder() {
@@ -15,7 +18,7 @@ namespace json {
         } else {
             *node_stacks_.back() = Dict();
         }
-        return std::move(*this);
+        return move(*this);
     }
 
     ArrayItemContext Builder::StartArray() {
@@ -26,7 +29,7 @@ namespace json {
         } else {
             *node_stacks_.back() = Array();
         }
-        return std::move(*this);
+        return move(*this);
     }
 
     Builder& Builder::EndDict() {
@@ -39,9 +42,9 @@ namespace json {
         return *this;
     }
 
-    KeyContext Builder::Key(std::string key) {
+    KeyContext Builder::Key(const string& key) {
         node_stacks_.emplace_back(&const_cast<Dict&>(node_stacks_.back()->AsDict())[key]);
-        return std::move(*this);
+        return move(*this);
     }
 
     Builder& Builder::Value(Node value) {
@@ -55,7 +58,7 @@ namespace json {
     }
 
     Node Builder::Build() {
-        return std::move(root_);
+        return move(root_);
     }
 
     //----------------KeyContext----------------
@@ -64,15 +67,15 @@ namespace json {
             : builder_(builder) {}
 
     DictItemContext KeyContext::Value(Node value) {
-        return std::move(builder_.Value(std::move(value)));
+        return move(builder_.Value(move(value)));
     }
 
     ArrayItemContext KeyContext::StartArray() {
-        return std::move(builder_.StartArray());
+        return move(builder_.StartArray());
     }
 
     DictItemContext KeyContext::StartDict() {
-        return std::move(builder_.StartDict());
+        return move(builder_.StartDict());
     }
 
     //------------------DictItemContext------------------
@@ -80,8 +83,8 @@ namespace json {
     DictItemContext::DictItemContext(Builder&& builder)
             : builder_(builder) {}
 
-    KeyContext DictItemContext::Key(std::string key) {
-        return std::move(builder_.Key(std::move(key)));
+    KeyContext DictItemContext::Key(string key) {
+        return move(builder_.Key(move(key)));
     }
 
     Builder& DictItemContext::EndDict() {
@@ -94,16 +97,16 @@ namespace json {
             : builder_(builder) {}
 
     ArrayItemContext& ArrayItemContext::Value(Node value) {
-        builder_.Value(std::move(value));
+        builder_.Value(move(value));
         return *this;
     }
 
     DictItemContext ArrayItemContext::StartDict() {
-        return std::move(builder_.StartDict());
+        return move(builder_.StartDict());
     }
 
     ArrayItemContext ArrayItemContext::StartArray() {
-        return std::move(builder_.StartArray());
+        return move(builder_.StartArray());
     }
 
     Builder& ArrayItemContext::EndArray() {

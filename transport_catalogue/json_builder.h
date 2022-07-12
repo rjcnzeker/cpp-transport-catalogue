@@ -25,7 +25,7 @@ namespace json {
 
         virtual Builder& EndArray();
 
-        virtual KeyContext Key(std::string key);
+        virtual KeyContext Key(const std::string& key);
 
         Builder& Value(Node value);
 
@@ -62,7 +62,7 @@ namespace json {
 
         DictItemContext(Builder&& builder);
 
-        KeyContext Key(std::string key) override;
+        KeyContext Key(std::string key);
 
         Builder& EndDict() override;
 
