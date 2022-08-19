@@ -23,4 +23,4 @@ add_executable(domain.h
         svg.cpp
         svg.h
         transport_catalogue.cpp
-        transport_catalogue.h graph.h ranges.h router.h transoprt_router.cpp transoprt_router.h)
+        transport_catalogue.h graph.h ranges.h router.h transport_router.cpp transport_router.h)

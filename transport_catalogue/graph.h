@@ -10,11 +10,18 @@ namespace graph {
     using VertexId = size_t;
     using EdgeId = size_t;
 
+    enum class TypeEdge {
+        WAIT,
+        BUS,
+    };
+
     template<typename Weight>
     struct Edge {
         VertexId from;
         VertexId to;
         Weight weight;
+        TypeEdge type;
+        int span_count;
     };
 
     template<typename Weight>

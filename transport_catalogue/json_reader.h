@@ -6,6 +6,7 @@
 #include "geo.h"
 #include "transport_catalogue.h"
 #include "request_handler.h"
+#include "transport_router.h"
 
 
 namespace json {
@@ -13,8 +14,9 @@ namespace json {
 
     public:
 
-        explicit JsonReader(RequestHandler& request_handler, renderer::MapRenderer& mr)
-                : rh_(request_handler), mr_(mr) {
+        explicit JsonReader(RequestHandler& request_handler, renderer::MapRenderer& mr,
+                            transport_catalogue::TransportRouter& router)
+                : rh_(request_handler), mr_(mr), tr_(router) {
         }
 
         Document ProcessRequests(std::istream& input);
@@ -23,6 +25,8 @@ namespace json {
         RequestHandler& rh_;
 
         renderer::MapRenderer& mr_;
+
+        transport_catalogue::TransportRouter& tr_;
 
         void ProcessBaseBusRequests(const std::vector<json::Node>& buses_requests);
 
@@ -33,6 +37,8 @@ namespace json {
         void ProcessRenderRequests(Node& render_requests);
 
         static svg::Color InputColor(Node& color_node);
+
+        void ProcessRouterSittings(Node& node);
     };
 
 }

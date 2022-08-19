@@ -3,6 +3,7 @@
 #include "transport_catalogue.h"
 #include "json_reader.h"
 #include "json_builder.h"
+#include "router.h"
 
 using namespace std;
 
@@ -19,7 +20,7 @@ namespace json {
 
         Node render_requests;
 
-        vector<Node> map_requests;
+        Node routing_settings;
 
         for (const auto& node : document.GetRoot().AsDict()) {
             if (node.first == "base_requests"s) {
@@ -37,21 +38,32 @@ namespace json {
                 }
             } else if (node.first == "render_settings") {
                 render_requests = node.second;
-            } else if (node.first == "render_settings") {
-                map_requests.push_back(node.second);
+            } else if (node.first == "routing_settings") {
+                routing_settings = node.second;
             }
         }
+
+        ProcessRouterSittings(routing_settings);
 
         ProcessRenderRequests(render_requests);
 
         ProcessBaseStopRequests(base_requests_stops);
+
+        rh_.ConfigureRouter();
 
         ProcessBaseBusRequests(base_requests_buses);
 
         return ProcessStateRequests(stat_requests);
     }
 
-    void JsonReader::ProcessBaseBusRequests(const vector <Node>& buses_requests) {
+    void JsonReader::ProcessRouterSittings(Node& router_requests) {
+        Dict router_data = router_requests.AsDict();
+
+        tr_.SetWaitTime(router_data.at("bus_wait_time").AsDouble());
+        tr_.SetVelocity(router_data.at("bus_velocity").AsDouble());
+    }
+
+    void JsonReader::ProcessBaseBusRequests(const vector<Node>& buses_requests) {
         string name;
 
         bool there_and_back;
@@ -156,6 +168,11 @@ namespace json {
                                       .Key("map"s).Value(string_stream.str())
                                       .EndDict()
                                       .Build());
+            }
+
+            if (request_data.at("type"s) == "Route"s) {
+                //TODO
+                rh_.GetRoute(request_data.at("from").AsString(), request_data.at("to").AsString());
             }
         }
 

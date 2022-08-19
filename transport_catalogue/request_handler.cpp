@@ -176,32 +176,35 @@ namespace cin_output {
 }// namespace cin_output_reader
 
 void RequestHandler::AddBus(string name, deque<string> stops, bool there_and_back) {
-    db_.AddBus(name, stops, there_and_back);
+    catalogue_.AddBus(name, stops, there_and_back);
+    router_.AddBus(catalogue_.GetDistances(), stops, there_and_back);
 }
 
 void RequestHandler::AddStop(string name, geo::Coordinates coordinates, const map<string, int>& distances) {
-    db_.AddStop(name, coordinates, distances);
+    catalogue_.AddStop(name, coordinates, distances);
 }
 
 Bus RequestHandler::GetBus(const string& name) {
-    return db_.GetBus(name);
+    return catalogue_.GetBus(name);
 }
 
 Stop RequestHandler::GetStop(const string& name) {
-    return db_.GetStop(name);
+    return catalogue_.GetStop(name);
 }
 
 set<string> RequestHandler::GetBusesOnStop(const string& name) {
-    return db_.GetBusesOnStop(name);
+    return catalogue_.GetBusesOnStop(name);
 }
 
 set<const Bus*, BusComparator> RequestHandler::GetBuses() const {
-    return db_.GetBuses();
+    return catalogue_.GetBuses();
 }
 
 void RequestHandler::RenderMap(svg::Document& doc) const {
-
     set<const Bus*, BusComparator> buses = GetBuses();
     renderer_.Render(doc, buses);
+}
 
+void RequestHandler::ConfigureRouter() {
+    router_.SetGraph(catalogue_.GetStops());
 }

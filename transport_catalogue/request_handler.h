@@ -7,6 +7,8 @@
 #include "domain.h"
 #include "json.h"
 #include "map_renderer.h"
+#include "transport_router.h"
+#include "router.h"
 
 namespace cin_input {
 
@@ -50,8 +52,9 @@ namespace cin_output {
 class RequestHandler {
 public:
     // MapRenderer понадобится в следующей части итогового проекта
-    RequestHandler(transport_catalogue::TransportCatalogue& db, const renderer::MapRenderer& renderer)
-            : db_(db), renderer_(renderer) {}
+    RequestHandler(transport_catalogue::TransportCatalogue& db, const renderer::MapRenderer& renderer,
+                   transport_catalogue::TransportRouter& router)
+            : catalogue_(db), renderer_(renderer), router_(router) {}
 
     void AddBus(std::string name, std::deque<std::string> stops, bool there_and_back);
 
@@ -68,10 +71,18 @@ public:
     // Этот метод будет нужен в следующей части итогового проекта
     void RenderMap(svg::Document& doc) const;
 
+    void GetRoute(const string& from, const string& to) {
+        //TODO Получать информацию о маршруте
+    }
+
+    void ConfigureRouter();
+
 private:
 
-    transport_catalogue::TransportCatalogue& db_;
+    transport_catalogue::TransportCatalogue& catalogue_;
 
     // RequestHandler использует агрегацию объектов "Транспортный Справочник" и "Визуализатор Карты"
     const renderer::MapRenderer& renderer_;
+
+    transport_catalogue::TransportRouter& router_;
 };

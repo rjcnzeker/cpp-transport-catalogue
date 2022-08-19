@@ -10,6 +10,14 @@ using namespace std;
 
 namespace transport_catalogue {
 
+    size_t TransportCatalogue::PairStopsHasher::operator()(
+            const std::pair<std::string_view, std::string_view>& stops_pair) const {
+        std::string left_plus_right(stops_pair.first.substr(0));
+        left_plus_right += stops_pair.second.substr(0);
+
+        return d_hasher_(left_plus_right);
+    }
+
     void TransportCatalogue::AddStop(std::string& name, geo::Coordinates coordinates,
                                      const map<string, int>& distances) {
         Stop stop;
@@ -55,8 +63,12 @@ namespace transport_catalogue {
                 if (there_and_back) {
                     if (distances_.count({left_stop, right_stop}) == 0) {
                         map_distance += distances_.at({right_stop, left_stop}) * 2;
+                        //Раз обратной дистанции нет, то добавляем
+                        distances_.insert({{left_stop, right_stop}, distances_.at({right_stop, left_stop})});
                     } else if (distances_.count({right_stop, left_stop}) == 0) {
                         map_distance += distances_.at({left_stop, right_stop}) * 2;
+                        //Раз обратной дистанции нет, то добавляем
+                        distances_.insert({{right_stop, left_stop}, distances_.at({left_stop, right_stop})});
                     } else {
                         map_distance += distances_.at({left_stop, right_stop});
                         map_distance += distances_.at({right_stop, left_stop});
@@ -66,6 +78,8 @@ namespace transport_catalogue {
 
                     if (distances_.count({left_stop, right_stop}) == 0) {
                         map_distance += distances_.at({right_stop, left_stop});
+                        //Раз обратной дистанции нет, то добавляем
+                        distances_.insert({{left_stop, right_stop}, distances_.at({right_stop, left_stop})});
                     } else {
                         map_distance += distances_.at({left_stop, right_stop});
                     }
@@ -105,6 +119,14 @@ namespace transport_catalogue {
         return Bus{};
     }
 
+    set<const Bus*, BusComparator> TransportCatalogue::GetBuses() {
+        set<const Bus*, BusComparator> result;
+        for (pair<const basic_string_view<char>, const Bus*> bus : busname_to_buses_) {
+            result.insert(bus.second);
+        }
+        return result;
+    }
+
     std::set<std::string> TransportCatalogue::GetBusesOnStop(const string& name) {
         set<string> buses_on_stop;
 
@@ -126,21 +148,13 @@ namespace transport_catalogue {
         return Stop{};
     }
 
-    set<const Bus*, BusComparator> TransportCatalogue::GetBuses() {
-        set<const Bus*, BusComparator> result;
-        for (pair<const basic_string_view<char>, const Bus*> bus : busname_to_buses_) {
-            result.insert(bus.second);
-        }
-        return result;
+    const std::unordered_map<std::string_view, Stop*>& TransportCatalogue::GetStops() const {
+        return stopname_to_stops_;
     }
 
-    size_t
-    TransportCatalogue::PairStopsHasher::operator()(
-            const std::pair<std::string_view, std::string_view>& stops_pair) const {
-        std::string left_plus_right(stops_pair.first.substr(0));
-        left_plus_right += stops_pair.second.substr(0);
-
-        return d_hasher_(left_plus_right);
+    const unordered_map<std::pair<std::string, std::string>, int, TransportCatalogue::PairStopsHasher>&
+    TransportCatalogue::GetDistances() const {
+        return distances_;
     }
 
 } // namespace transport_catalogue

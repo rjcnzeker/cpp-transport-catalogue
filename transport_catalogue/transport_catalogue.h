@@ -12,10 +12,18 @@
 #include "geo.h"
 #include "domain.h"
 
+
 namespace transport_catalogue {
 
     class TransportCatalogue {
     public:
+
+        struct PairStopsHasher {
+            size_t operator()(const std::pair<std::string_view, std::string_view>& stops_pair) const;
+
+        private:
+            std::hash<std::string> d_hasher_;
+        };
 
         TransportCatalogue() = default;
 
@@ -25,21 +33,17 @@ namespace transport_catalogue {
 
         Bus GetBus(std::string_view name);
 
+        std::set<const Bus*, BusComparator> GetBuses();
+
         std::set<std::string> GetBusesOnStop(const std::string& name);
 
         Stop GetStop(std::string_view name);
 
-        std::set<const Bus*, BusComparator> GetBuses();
+        const std::unordered_map<std::string_view, Stop*>& GetStops() const;
+
+        const std::unordered_map<std::pair<std::string, std::string>, int, PairStopsHasher>& GetDistances() const;
 
     private:
-
-        struct PairStopsHasher {
-            size_t operator()(const std::pair<std::string_view, std::string_view>& stops_pair) const;
-
-        private:
-            std::hash<std::string> d_hasher_;
-        };
-
         std::deque<Stop> stops_;
         std::unordered_map<std::string_view, Stop*> stopname_to_stops_;
 
