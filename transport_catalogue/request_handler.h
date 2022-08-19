@@ -72,7 +72,7 @@ public:
     void RenderMap(svg::Document& doc) const;
 
     void GetRoute(const string& from, const string& to) {
-        //TODO Получать информацию о маршруте
+
     }
 
     void ConfigureRouter();
