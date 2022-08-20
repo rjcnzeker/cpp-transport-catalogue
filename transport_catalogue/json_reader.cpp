@@ -280,4 +280,4 @@ namespace json {
         return "none";
     }
 
-}
+} // namespace json

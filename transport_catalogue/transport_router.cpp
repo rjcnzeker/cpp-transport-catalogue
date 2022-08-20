@@ -1,16 +1,12 @@
-//
-
-#include <memory>
-#include <iostream>
-#include <exception>
 #include "transport_router.h"
 
-//
-// Created by rjcnz on 28.07.2022.
+#include <memory>
+#include <exception>
+
+using namespace graph;
+using namespace std;
 
 namespace transport_catalogue {
-
-    using namespace graph;
 
     void TransportRouter::SetWaitTime(double wait_time) {
         bus_wait_time_ = wait_time;
@@ -20,7 +16,7 @@ namespace transport_catalogue {
         bus_velocity_ = velocity;
     }
 
-    void TransportRouter::SetGraph(const unordered_map<std::string_view, Stop*>& stops) {
+    void TransportRouter::SetGraph(const unordered_map<string_view, Stop*>& stops) {
         graph_ = make_unique<DirectedWeightedGraph<double>>(stops.size() * 2);
         //Остановки на улице (до ожидания) имеют четный индекс, после - нечетный
         size_t count = 0;
@@ -34,7 +30,7 @@ namespace transport_catalogue {
             in_stops_names_to_id_.insert({stop.second->name_, id_in_stop});
             ++count;
 
-            graph::Edge<double> wait_edge{id_out_stop, id_in_stop, bus_wait_time_, graph::TypeEdge::Wait};
+            graph::Edge<double> wait_edge{id_out_stop, id_in_stop, bus_wait_time_, graph::TypeEdge::Wait, 0, 0};
             graph_->AddEdge(wait_edge);
         }
     }
@@ -82,23 +78,26 @@ namespace transport_catalogue {
         if (there_and_back) {
             deque<string> stops_copy_reverse{stops_copy.rbegin(), stops_copy.rend()};
 
-            //От первого до предпоследнего
             for (int l = 0; l < stops_copy_reverse.size() - 1; ++l) {
                 double distance_from_l_stop = 0;
                 int span_count = 1;
 
                 //От левой остановки до последней
                 for (int r = l + 1; r < stops_copy_reverse.size(); ++r) {
+                    if (stops_copy_reverse[r] == stops_copy_reverse[l]) {
+                        continue;
+                    }
+
                     //В метрах
                     distance_from_l_stop += distances.at({stops_copy_reverse[r - 1], stops_copy_reverse[r]});
 
                     //В минутах
-                    double time_travel = (distance_from_l_stop / bus_velocity_) * 60;
+                    double time_travel = (distance_from_l_stop / bus_velocity_) * 0.06;
 
                     Edge<double> edge{in_stops_names_to_id_.at(stops_copy_reverse[l]),
                                       out_stops_names_to_id_.at(stops_copy_reverse[r]),
                                       time_travel,
-                                      TypeEdge::Bus, span_count};
+                                      TypeEdge::Bus, span_count, buses_by_id.size() - 1};
 
                     graph_->AddEdge(edge);
 
@@ -134,4 +133,4 @@ namespace transport_catalogue {
         return buses_by_id[id];
     }
 
-}
+} // namespace transport_catalogue

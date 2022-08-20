@@ -10,6 +10,7 @@
 
 
 namespace json {
+
     class JsonReader {
 
     public:
@@ -41,4 +42,4 @@ namespace json {
         void ProcessRouterSittings(Node& node);
     };
 
-}
+} // namespace json
