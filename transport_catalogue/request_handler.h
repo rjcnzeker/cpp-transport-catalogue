@@ -71,11 +71,19 @@ public:
     // Этот метод будет нужен в следующей части итогового проекта
     void RenderMap(svg::Document& doc) const;
 
-    void GetRoute(const string& from, const string& to) {
-
+    std::optional<graph::Router<double>::RouteInfo> GetRoute(const string& from, const string& to) {
+        return router_.GetRoute(from, to);
     }
 
+    void ConfigureGraph();
+
     void ConfigureRouter();
+
+    graph::Edge<double> GetEdge(size_t edge_id);
+
+    string GetStopByVertexId(size_t id);
+
+    string GetBusById(size_t bus_id);
 
 private:
 

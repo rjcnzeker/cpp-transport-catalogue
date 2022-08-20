@@ -49,9 +49,11 @@ namespace json {
 
         ProcessBaseStopRequests(base_requests_stops);
 
-        rh_.ConfigureRouter();
+        rh_.ConfigureGraph();
 
         ProcessBaseBusRequests(base_requests_buses);
+
+        rh_.ConfigureRouter();
 
         return ProcessStateRequests(stat_requests);
     }
@@ -81,7 +83,7 @@ namespace json {
         }
     }
 
-    void JsonReader::ProcessBaseStopRequests(const vector <Node>& stops_requests) {
+    void JsonReader::ProcessBaseStopRequests(const vector<Node>& stops_requests) {
         string name;
         geo::Coordinates coordinates(0.0, 0.0);
 
@@ -99,7 +101,7 @@ namespace json {
         }
     }
 
-    Document JsonReader::ProcessStateRequests(const vector <Node>& state_stops_requests) {
+    Document JsonReader::ProcessStateRequests(const vector<Node>& state_stops_requests) {
         Array arr;
 
         for (const auto& request : state_stops_requests) {
@@ -168,11 +170,56 @@ namespace json {
                                       .Key("map"s).Value(string_stream.str())
                                       .EndDict()
                                       .Build());
+                continue;
             }
 
             if (request_data.at("type"s) == "Route"s) {
-                //TODO
-                rh_.GetRoute(request_data.at("from").AsString(), request_data.at("to").AsString());
+                graph::Router<double>::RouteInfo route;
+                if (auto route_info = rh_.GetRoute(request_data.at("from").AsString(),
+                                                   request_data.at("to").AsString())) {
+                    route = route_info.value();
+                } else {
+                    arr.push_back(Builder{}.StartDict()
+                                          .Key("request_id"s).Value(request_data.at("id"s).AsInt())
+                                          .Key("error_message"s).Value("not found"s)
+                                          .EndDict().Build());
+                    continue;
+                }
+
+                Array edges;
+                for (size_t edge_id : route.edges) {
+                    graph::Edge<double> edge = rh_.GetEdge(edge_id);
+                    string type;
+                    if (edge.type == graph::TypeEdge::Bus) {
+                        type = "Bus"s;
+                        string bus_name = rh_.GetBusById(edge.bus_id);
+                        edges.push_back(Builder{}.StartDict()
+                                                .Key("type"s).Value(type)
+                                                .Key("bus"s).Value(bus_name)
+                                                .Key("span_count").Value(edge.span_count)
+                                                .Key("time"s).Value(edge.weight)
+                                                .EndDict().Build());
+                    }
+                    if (edge.type == graph::TypeEdge::Wait) {
+                        type = "Wait"s;
+                        string stop_name = rh_.GetStopByVertexId(edge.from);
+                        edges.push_back(Builder{}.StartDict()
+                                                .Key("type"s).Value(type)
+                                                .Key("stop_name"s).Value(stop_name)
+                                                .Key("time"s).Value(edge.weight)
+                                                .EndDict().Build()
+                        );
+                        continue;
+                    }
+                }
+
+                arr.push_back(Builder{}.StartDict()
+                                      .Key("request_id"s).Value(request_data.at("id"s).AsInt())
+                                      .Key("total_time"s).Value(route.weight)
+                                      .Key("items"s).Value(edges)
+                                      .EndDict().Build());
+
+                continue;
             }
         }
 

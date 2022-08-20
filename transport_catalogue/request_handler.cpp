@@ -177,7 +177,7 @@ namespace cin_output {
 
 void RequestHandler::AddBus(string name, deque<string> stops, bool there_and_back) {
     catalogue_.AddBus(name, stops, there_and_back);
-    router_.AddBus(catalogue_.GetDistances(), stops, there_and_back);
+    router_.AddBus(catalogue_.GetDistances(), stops, there_and_back, name);
 }
 
 void RequestHandler::AddStop(string name, geo::Coordinates coordinates, const map<string, int>& distances) {
@@ -205,6 +205,22 @@ void RequestHandler::RenderMap(svg::Document& doc) const {
     renderer_.Render(doc, buses);
 }
 
-void RequestHandler::ConfigureRouter() {
+void RequestHandler::ConfigureGraph() {
     router_.SetGraph(catalogue_.GetStops());
+}
+
+void RequestHandler::ConfigureRouter() {
+    router_.SetRouter();
+}
+
+graph::Edge<double> RequestHandler::GetEdge(size_t edge_id) {
+    return router_.GetEdge(edge_id);
+}
+
+string RequestHandler::GetStopByVertexId(size_t id) {
+    return router_.GetStopByVertexId(id);
+}
+
+string RequestHandler::GetBusById(size_t bus_id) {
+    return router_.GetBusById(bus_id);
 }

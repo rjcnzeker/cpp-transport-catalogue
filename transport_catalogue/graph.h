@@ -11,8 +11,8 @@ namespace graph {
     using EdgeId = size_t;
 
     enum class TypeEdge {
-        WAIT,
-        BUS,
+        Wait,
+        Bus,
     };
 
     template<typename Weight>
@@ -22,6 +22,7 @@ namespace graph {
         Weight weight;
         TypeEdge type;
         int span_count;
+        size_t bus_id;
     };
 
     template<typename Weight>
