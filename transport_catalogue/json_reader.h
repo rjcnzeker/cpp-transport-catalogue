@@ -1,45 +1,67 @@
 #pragma once
 
-#include <istream>
+#include <filesystem>
+#include <iostream>
 
-#include "json.h"
-#include "geo.h"
+//#include "json.h"
+#include "json_builder.h"
 #include "transport_catalogue.h"
-#include "request_handler.h"
 #include "transport_router.h"
+#include "request_handler.h"
+#include "map_renderer.h"
 
-
-namespace json {
+namespace JsonReader {
+    using namespace std::literals;
 
     class JsonReader {
-
     public:
+        JsonReader(TransportCatalogue::TransportCatalogue& trnsprt_ctlg,
+                   TransportRouter::TransportRouter& trnsprt_routr,
+                   RequestHandler& req_hand,
+                   renderer::MapRenderer& map_rendr);
 
-        explicit JsonReader(RequestHandler& request_handler, renderer::MapRenderer& mr,
-                            transport_catalogue::TransportRouter& router)
-                : rh_(request_handler), mr_(mr), tr_(router) {
-        }
+        /** обработка .json с вводными данными из которых сформируется БД */
+        void ParseJsonMakeBase(std::istream& in);
 
-        Document ProcessRequests(std::istream& input);
+        /** обработка .json с запросами к готовой БД */
+        void ParseJsonProcessRequests(std::istream& in);
 
     private:
-        RequestHandler& rh_;
+        void ParseRequestsSrlz(const json::Dict&& req, std::string& path);
 
-        renderer::MapRenderer& mr_;
+        void ParseRequestsBase(json::Array&& vec_map);
 
-        transport_catalogue::TransportRouter& tr_;
+        domain::Stop ParseRequestsStops(const json::Dict& req);
 
-        void ProcessBaseBusRequests(const std::vector<json::Node>& buses_requests);
+        domain::Bus ParseRequestsBuses(const json::Dict& req);
 
-        void ProcessBaseStopRequests(const std::vector<json::Node>& stops_requests);
+        void ParseRequestsStopsLenght(const json::Dict& req);
 
-        Document ProcessStateRequests(const std::vector<Node>& state_stops_requests);
+        void ParseRequestsStat(const json::Array& vec_map);
 
-        void ProcessRenderRequests(Node& render_requests);
+        void ExecRequestsStat(std::vector<domain::RequestOut>&& requests);
 
-        static svg::Color InputColor(Node& color_node);
+        void ParseRequestsRendSett(const json::Dict&& map);
 
-        void ProcessRouterSittings(Node& node);
+        void ParseRequestsRoutSett(const json::Dict&& req);
+
+        json::Dict PrintResReqBus(std::optional<domain::BusStat>&& bus_stat_opt, int id);
+
+        json::Dict PrintResReqStop(std::optional<const std::unordered_set<const domain::Bus*>*> buses_opt, int id);
+
+        json::Dict PrintResReqMap(std::optional<svg::Document>&& doc_opt, int id);
+
+        json::Dict PrintResReqRoute(std::optional<domain::RoutStat>&& rout_stat_opt, int id);
+
+        TransportCatalogue::TransportCatalogue& trnsprt_ctlg_;
+
+        TransportRouter::TransportRouter& trnsprt_routr_;
+
+        RequestHandler& req_hand_;
+
+        renderer::MapRenderer& map_rendr_;
     };
 
-} // namespace json
+
+}// namespace JsonReader
+

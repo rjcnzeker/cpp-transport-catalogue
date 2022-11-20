@@ -1,55 +1,72 @@
 #pragma once
 
-#include "transport_catalogue.h"
 #include "graph.h"
 #include "router.h"
+#include "domain.h"
+#include "transport_catalogue.h"
+#include "unordered_map"
+#include "unordered_set"
+#include <memory>
 
-using namespace std;
-
-namespace transport_catalogue {
-
-    using namespace graph;
+namespace TransportRouter {
+    using namespace domain;
 
     class TransportRouter {
     public:
+        using OptRouteInfo = std::optional<graph::Router<double>::RouteInfo>;
+
+        // дополнительная информация о ребре
+        struct EdgeAditionInfo {
+            std::string bus_name; // имя автобуса едущего по ребру
+            size_t count_spans = 0; // кол-во пролетов между остановками в этом ребре
+        };
+
         TransportRouter() = default;
 
-        void SetWaitTime(double wait_time);
+        // создает граф
+        void CreateGraph(const TransportCatalogue::TransportCatalogue& db);
 
-        void SetVelocity(double velocity);
+        // возвращает маршрут и статистику по нему
+        std::optional<RoutStat> GetRouteStat(size_t id_stop_from, size_t id_stop_to) const;
 
-        void SetGraph(const unordered_map<std::string_view, Stop*>& stops);
+        // создает и возвращает маршрутизатор если его еще нет
+        const std::unique_ptr<graph::Router<double>>& GetRouter() const;
 
-        void
-        AddBus(const unordered_map<std::pair<std::string, std::string>, int, TransportCatalogue::PairStopsHasher>& distances,
-               const deque <string>& stops,
-               bool there_and_back, const string& name);
+        // Граф не создан
+        bool GetGraphIsNoInit() const;
 
-        void SetRouter();
+        void vInit(RoutingSettings routing_settings_, const TransportCatalogue::TransportCatalogue& trnsprt_ctlg);
 
-        std::optional<graph::Router<double>::RouteInfo> GetRoute(const string& from, const string& to);
+        const std::vector<EdgeAditionInfo>& GetEdgesBuses() const;
 
-        graph::Edge<double> GetEdge(size_t id);
+        const std::vector<std::string>& GetIdStopes() const;
 
-        string GetStopByVertexId(size_t id);
+        const graph::DirectedWeightedGraph<double>& GetGraph() const;
 
-        string GetBusById(size_t id);
+        void SetEdgesBuses(std::vector<EdgeAditionInfo>&& edges_buses);
+
+        void SetIdStopes(std::vector<std::string>&& id_stopes);
+
+        void SetGraph(graph::DirectedWeightedGraph<double>&& graph);
+
+        const RoutingSettings& GetRoutingSettings() const;
+
+        void SetRoutingSettings(RoutingSettings&& routing_settings);
 
     private:
-        unique_ptr <DirectedWeightedGraph<double>> graph_;
+        // параметры маршрута скорость, ожидание
+        RoutingSettings routing_settings_;
 
-        unique_ptr <Router<double>> router_;
+        // хранит дополнительная информация о ребре по индексу ребра
+        std::vector<EdgeAditionInfo> edges_buses_;
 
-        map <string, size_t> out_stops_names_to_id_;
-        map <string, size_t> in_stops_names_to_id_;
+        // хранит имена остановок по индексу
+        std::vector<std::string> id_stopes_;
 
-        map <size_t, string> id_out_stops_by_name;
+        // граф
+        std::optional<graph::DirectedWeightedGraph<double>> opt_graph_;
 
-        vector <string> buses_by_id;
-
-        double bus_wait_time_;
-        double bus_velocity_;
-
+        // маршрутизатор
+        mutable std::unique_ptr<graph::Router<double>> up_router_;
     };
-
 }

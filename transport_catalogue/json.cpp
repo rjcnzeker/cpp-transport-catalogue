@@ -280,6 +280,10 @@ namespace json {
             ctx.out << "null"sv;
         }
 
+        // В специализаци шаблона PrintValue для типа bool параметр value передаётся
+        // по константной ссылке, как и в основном шаблоне.
+        // В качестве альтернативы можно использовать перегрузку:
+        // void PrintValue(bool value, const PrintContext& ctx);
         template<>
         void PrintValue<bool>(const bool& value, const PrintContext& ctx) {
             ctx.out << (value ? "true"sv : "false"sv);
@@ -337,117 +341,6 @@ namespace json {
 
     }  // namespace
 
-    // ------------ Node -------------
-
-    Node::Node(Node::Value value) : Value(move(value)) {
-    }
-
-    bool Node::IsInt() const {
-        return std::holds_alternative<int>(*this);
-    }
-
-    int Node::AsInt() const {
-        using namespace std::literals;
-        if (!IsInt()) {
-            throw std::logic_error("Not an int"s);
-        }
-        return std::get<int>(*this);
-    }
-
-    bool Node::IsPureDouble() const {
-        return std::holds_alternative<double>(*this);
-    }
-
-    bool Node::IsDouble() const {
-        return IsInt() || IsPureDouble();
-    }
-
-    double Node::AsDouble() const {
-        using namespace std::literals;
-        if (!IsDouble()) {
-            throw std::logic_error("Not a double"s);
-        }
-        return IsPureDouble() ? std::get<double>(*this) : AsInt();
-    }
-
-    bool Node::IsBool() const {
-        return std::holds_alternative<bool>(*this);
-    }
-
-    bool Node::AsBool() const {
-        using namespace std::literals;
-        if (!IsBool()) {
-            throw std::logic_error("Not a bool"s);
-        }
-
-        return std::get<bool>(*this);
-    }
-
-    bool Node::IsNull() const {
-        return std::holds_alternative<std::nullptr_t>(*this);
-    }
-
-    bool Node::IsArray() const {
-        return std::holds_alternative<Array>(*this);
-    }
-
-    const Array& Node::AsArray() const {
-        using namespace std::literals;
-        if (!IsArray()) {
-            throw std::logic_error("Not an array"s);
-        }
-
-        return std::get<Array>(*this);
-    }
-
-    bool Node::IsString() const {
-        return std::holds_alternative<std::string>(*this);
-    }
-
-    const std::string& Node::AsString() const {
-        using namespace std::literals;
-        if (!IsString()) {
-            throw std::logic_error("Not a string"s);
-        }
-
-        return std::get<std::string>(*this);
-    }
-
-    bool Node::IsDict() const {
-        return std::holds_alternative<Dict>(*this);
-    }
-
-    const Dict& Node::AsDict() const {
-        using namespace std::literals;
-        if (!IsDict()) {
-            throw std::logic_error("Not a dict"s);
-        }
-
-        return std::get<Dict>(*this);
-    }
-
-    bool Node::operator==(const Node& rhs) const {
-        return GetValue() == rhs.GetValue();
-    }
-
-    const Node::Value& Node::GetValue() const {
-        return *this;
-    }
-
-    Node::Value& Node::GetValue() {
-        return *this;
-    }
-    // ------------- Document -----------
-
-    Document::Document(Node root)
-            : root_(std::move(root)) {
-    }
-
-    const Node& Document::GetRoot() const {
-        return root_;
-    }
-
-
     Document Load(std::istream& input) {
         return Document{LoadNode(input)};
     }
@@ -455,4 +348,5 @@ namespace json {
     void Print(const Document& doc, std::ostream& output) {
         PrintNode(doc.GetRoot(), PrintContext{output});
     }
+
 }  // namespace json

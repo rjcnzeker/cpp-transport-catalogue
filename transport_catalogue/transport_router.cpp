@@ -1,136 +1,127 @@
 #include "transport_router.h"
 
-#include <memory>
-#include <exception>
+namespace TransportRouter {
+    //----------------------------------------------------------------------------
+    void TransportRouter::CreateGraph(const TransportCatalogue::TransportCatalogue& db) {
+        graph::DirectedWeightedGraph<double> graph(db.GetStops().size());
+        id_stopes_.resize(db.GetStops().size());
+        for (const auto& bus : db.GetBuses()) {
 
-using namespace graph;
-using namespace std;
-
-namespace transport_catalogue {
-
-    void TransportRouter::SetWaitTime(double wait_time) {
-        bus_wait_time_ = wait_time;
-    }
-
-    void TransportRouter::SetVelocity(double velocity) {
-        bus_velocity_ = velocity;
-    }
-
-    void TransportRouter::SetGraph(const unordered_map<string_view, Stop*>& stops) {
-        graph_ = make_unique<DirectedWeightedGraph<double>>(stops.size() * 2);
-        //Остановки на улице (до ожидания) имеют четный индекс, после - нечетный
-        size_t count = 0;
-        for (const auto& stop : stops) {
-            size_t id_out_stop = count;
-            out_stops_names_to_id_.insert({stop.second->name_, id_out_stop});
-            id_out_stops_by_name.insert({id_out_stop, stop.second->name_});
-            ++count;
-
-            size_t id_in_stop = count;
-            in_stops_names_to_id_.insert({stop.second->name_, id_in_stop});
-            ++count;
-
-            graph::Edge<double> wait_edge{id_out_stop, id_in_stop, bus_wait_time_, graph::TypeEdge::Wait, 0, 0};
-            graph_->AddEdge(wait_edge);
-        }
-    }
-
-    void TransportRouter::AddBus(
-            const unordered_map<pair<string, string>, int, TransportCatalogue::PairStopsHasher>& distances,
-            const deque<string>& stops,
-            bool there_and_back, const string& name) {
-        if (!graph_) {
-            throw logic_error("Graph was not initialized");
-        }
-
-        buses_by_id.push_back(name);
-
-        deque<string> stops_copy{stops.begin(), stops.end()};
-
-        //От первого до предпоследнего
-        for (int l = 0; l < stops_copy.size() - 1; ++l) {
-            double distance_from_l_stop = 0;
-            int span_count = 1;
-
-            //От левой остановки до последней
-            for (int r = l + 1; r < stops_copy.size(); ++r) {
-                if (stops_copy[r] == stops_copy[l]) {
-                    continue;
-                }
-
-                //В метрах
-                distance_from_l_stop += distances.at({stops_copy[r - 1], stops_copy[r]});
-
-                //В минутах
-                double time_travel = (distance_from_l_stop / bus_velocity_) * 0.06;
-
-                Edge<double> edge{in_stops_names_to_id_.at(stops_copy[l]),
-                                  out_stops_names_to_id_.at(stops_copy[r]),
-                                  time_travel,
-                                  TypeEdge::Bus, span_count, buses_by_id.size() - 1};
-
-                graph_->AddEdge(edge);
-
-                ++span_count;
-            }
-        }
-
-        if (there_and_back) {
-            deque<string> stops_copy_reverse{stops_copy.rbegin(), stops_copy.rend()};
-
-            for (int l = 0; l < stops_copy_reverse.size() - 1; ++l) {
-                double distance_from_l_stop = 0;
-                int span_count = 1;
-
-                //От левой остановки до последней
-                for (int r = l + 1; r < stops_copy_reverse.size(); ++r) {
-                    if (stops_copy_reverse[r] == stops_copy_reverse[l]) {
-                        continue;
-                    }
-
-                    //В метрах
-                    distance_from_l_stop += distances.at({stops_copy_reverse[r - 1], stops_copy_reverse[r]});
-
-                    //В минутах
-                    double time_travel = (distance_from_l_stop / bus_velocity_) * 0.06;
-
-                    Edge<double> edge{in_stops_names_to_id_.at(stops_copy_reverse[l]),
-                                      out_stops_names_to_id_.at(stops_copy_reverse[r]),
-                                      time_travel,
-                                      TypeEdge::Bus, span_count, buses_by_id.size() - 1};
-
-                    graph_->AddEdge(edge);
-
-                    ++span_count;
+            for (auto it_from = bus.stops.begin(); it_from != bus.stops.end(); ++it_from) {
+                const Stop* stop_from = *it_from;
+                double lengh = 0;
+                const Stop* prev_stop = stop_from;
+                id_stopes_[stop_from->id] = stop_from->name;
+                for (auto it_to = std::next(it_from); it_to != bus.stops.end(); ++it_to) {
+                    const Stop* stop_to = *it_to;
+                    lengh += db.GetRangeStops(prev_stop, stop_to);
+                    prev_stop = stop_to;
+                    double time_on_bus = lengh / GetMetrMinFromKmH(routing_settings_.bus_velocity); // minute
+                    // вес ребра учитывает и ожидание и время в пути, чтобы учитывать затраты на пересадки
+                    graph.AddEdge({stop_from->id, stop_to->id, (time_on_bus + routing_settings_.bus_wait_time_minut)});
+                    // запоминает имя автобуса и количество прогонов между остановками
+                    edges_buses_.push_back({bus.name, static_cast<size_t>(std::distance(it_from, it_to))});
                 }
             }
+        }
+        opt_graph_ = std::move(graph);
+    }
 
+    //----------------------------------------------------------------------------
+    std::optional<RoutStat> TransportRouter::GetRouteStat(size_t id_stop_from, size_t id_stop_to) const {
+        // попытка построить маршрут
+        const OptRouteInfo opt_route_info = GetRouter()->BuildRoute(id_stop_from, id_stop_to);
+        // проверка маршрута
+        if (!opt_route_info.has_value()) {
+            return std::nullopt;
         }
 
+        const graph::Router<double>::RouteInfo& route_info = opt_route_info.value();
+        double total_time = route_info.weight;
+        // хранит данные для вывода в поток
+        std::vector<RoutStat::VariantItem> items;
+        for (const auto& edge_id : route_info.edges) {
+            // ребро по id
+            const auto& edge = opt_graph_.value().GetEdge(edge_id);
+            // номер автобуса едущий по этому ребру и количество прогонов в ребре
+            const auto [bus_num, span_count] = edges_buses_[edge_id];
+            items.push_back(RoutStat::ItemsWait{"Wait", static_cast<double>(routing_settings_.bus_wait_time_minut),
+                                                std::string(id_stopes_[edge.from])});
+            // вычитаем из веса время ожидания
+            items.push_back(
+                    RoutStat::ItemsBus{"Bus", edge.weight - static_cast<double>(routing_settings_.bus_wait_time_minut),
+                                       span_count, std::string(bus_num)});
+        }
+        return RoutStat{total_time, items};
     }
 
-    void TransportRouter::SetRouter() {
-        if (!router_) {
-            router_ = make_unique<graph::Router<double>>(*graph_);
-        } else {
-            throw logic_error("Router already initialized");
+    //----------------------------------------------------------------------------
+    bool TransportRouter::GetGraphIsNoInit() const {
+        return !opt_graph_.has_value();
+    }
+
+    //----------------------------------------------------------------------------
+    void TransportRouter::vInit(RoutingSettings routing_settings_,
+                                const TransportCatalogue::TransportCatalogue& trnsprt_ctlg) {
+        SetRoutingSettings(std::move(routing_settings_));
+        // создаем граф и маршрутизатор
+        if (GetGraphIsNoInit()) {
+            CreateGraph(trnsprt_ctlg);
         }
     }
 
-    optional<graph::Router<double>::RouteInfo> TransportRouter::GetRoute(const string& from, const string& to) {
-        return router_->BuildRoute(out_stops_names_to_id_.at(from), out_stops_names_to_id_.at(to));
+    //----------------------------------------------------------------------------
+    const std::vector<TransportRouter::EdgeAditionInfo>& TransportRouter::GetEdgesBuses() const {
+        return edges_buses_;
     }
 
-    Edge<double> TransportRouter::GetEdge(size_t id) {
-        return graph_->GetEdge(id);
+    //----------------------------------------------------------------------------
+    const std::vector<std::string>& TransportRouter::GetIdStopes() const {
+        return id_stopes_;
     }
 
-    string TransportRouter::GetStopByVertexId(size_t id) {
-        return id_out_stops_by_name.at(id);
+    //----------------------------------------------------------------------------
+    const graph::DirectedWeightedGraph<double>& TransportRouter::GetGraph() const {
+        return opt_graph_.value();
     }
 
-    string TransportRouter::GetBusById(size_t id) {
-        return buses_by_id[id];
+    //----------------------------------------------------------------------------
+    void TransportRouter::SetEdgesBuses(std::vector<EdgeAditionInfo>&& edges_buses) {
+        edges_buses_ = std::move(edges_buses);
     }
 
-} // namespace transport_catalogue
+    //----------------------------------------------------------------------------
+    void TransportRouter::SetIdStopes(std::vector<std::string>&& id_stopes) {
+        id_stopes_ = id_stopes;
+    }
+
+    //----------------------------------------------------------------------------
+    void TransportRouter::SetGraph(graph::DirectedWeightedGraph<double>&& graph) {
+        opt_graph_ = graph;
+    }
+
+    //----------------------------------------------------------------------------
+    const RoutingSettings& TransportRouter::GetRoutingSettings() const {
+        return routing_settings_;
+    }
+
+    //----------------------------------------------------------------------------
+    void TransportRouter::SetRoutingSettings(RoutingSettings&& routing_settings) {
+        routing_settings_ = std::move(routing_settings);
+    }
+
+    //----------------------------------------------------------------------------
+    const std::unique_ptr<graph::Router<double>>& TransportRouter::GetRouter() const {
+        // граф создан
+        if (GetGraphIsNoInit()) {
+            std::cerr << " ! opt_graph_.has_value()" << std::endl;
+            throw ("! opt_graph_.has_value()");
+        }
+        // создает маршрутизатор если его еще нет
+        if (!up_router_) {
+            up_router_ = std::make_unique<graph::Router<double>>(opt_graph_.value());
+        }
+        return up_router_;
+    }
+    //----------------------------------------------------------------------------
+}

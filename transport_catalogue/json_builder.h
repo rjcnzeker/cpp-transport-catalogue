@@ -1,94 +1,107 @@
 #pragma once
 
+#include <sstream>
+#include <stack>
+
 #include "json.h"
 
 namespace json {
+    class ArrayItemContext;
 
-    class KeyContext;
+    class KeyItemContext;
 
     class DictItemContext;
 
-    class ArrayItemContext;
-
-    //---------Builder----------------
-
     class Builder {
-    public:
 
+    public:
         Builder();
 
-        virtual DictItemContext StartDict();
+        template<typename T = Builder>
+        T& Value(Node::Value value);
 
-        virtual ArrayItemContext StartArray();
+        DictItemContext& StartDict();
 
-        virtual Builder& EndDict();
+        Builder& EndDict();
 
-        virtual Builder& EndArray();
+        ArrayItemContext& StartArray();
 
-        virtual KeyContext Key(const std::string& key);
+        Builder& EndArray();
 
-        Builder& Value(Node value);
+        json::Node Build();
 
-        virtual Node Build();
+        KeyItemContext& Key(std::string key);
 
     private:
-
         Node root_;
-        std::vector<Node*> node_stacks_;
+        bool expect_value = false;
+        bool init = false;
+        std::vector<Node*> nodes_stack_{&root_};
+
+        void IsReady();
+
+        void ExpectKey();
     };
 
-    //------------KeyContext------------------
+    template<typename T>
+    T& Builder::Value(Node::Value value) {
+        IsReady();
+        ExpectKey();
+        init = true;
+        if (nodes_stack_.back()->IsArray()) {
+            std::get<Array>(nodes_stack_.back()->GetValue()).emplace_back(value);
+        } else {
+            nodes_stack_.back()->GetValue() = value;
+        }
+        if (expect_value) {
+            nodes_stack_.pop_back();
+            expect_value = false;
+        }
+        return static_cast<T&>(*this);;
+    }
 
-    class KeyContext final : Builder {
+    class DictItemContext : public Builder {
     public:
+        template<typename T>
+        T Value(Node::Value value) = delete;
 
-        KeyContext(Builder&& builder);
+        Builder& Value(Node::Value value) = delete;
 
-        DictItemContext Value(Node value);
+        DictItemContext& StartDict() = delete;
 
-        ArrayItemContext StartArray() override;
+        ArrayItemContext& StartArray() = delete;
 
-        DictItemContext StartDict() override;
+        Builder& EndArray() = delete;
 
-    private:
-
-        Builder& builder_;
+        json::Node Build() = delete;
     };
 
-    //---------------DictItemContext-------------------
-
-    class DictItemContext final : Builder {
+    class ArrayItemContext : public Builder {
     public:
+        Builder& EndDict() = delete;
 
-        DictItemContext(Builder&& builder);
+        json::Node Build() = delete;
 
-        KeyContext Key(const std::string& key);
+        KeyItemContext& Key(std::string key) = delete;
 
-        Builder& EndDict() override;
-
-    private:
-
-        Builder& builder_;
+        ArrayItemContext& Value(Node::Value value) {
+            return Builder::Value<ArrayItemContext>(std::move(value));
+        }
     };
 
-    //-----------ArrayItemContext----------------------
-
-    class ArrayItemContext final : Builder {
+    class KeyItemContext : public Builder {
     public:
+        Builder& EndDict() = delete;
 
-        ArrayItemContext(Builder&& builder);
+        Builder& EndArray() = delete;
 
-        ArrayItemContext& Value(Node value);
+        json::Node Build() = delete;
 
-        DictItemContext StartDict() override;
+        KeyItemContext& Key(std::string key) = delete;
 
-        ArrayItemContext StartArray() override;
-
-        Builder& EndArray() override;
-
-    private:
-
-        Builder& builder_;
+        DictItemContext& Value(Node::Value value) {
+            return Builder::Value<DictItemContext>(std::move(value));
+        }
     };
 
-} // namespace json
+}

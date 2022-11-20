@@ -1,116 +1,101 @@
 #include "json_builder.h"
-
-using namespace std;
+#include <array>
+#include <tuple>
+#include <utility>
+#include <variant>
+#include <algorithm>
 
 namespace json {
-
-    //------------------Builder----------------------------
-
     Builder::Builder() {
-        node_stacks_.push_back(&root_);
     }
 
-    DictItemContext Builder::StartDict() {
-        if (node_stacks_.back()->IsArray()) {
-            const_cast<Array&>(node_stacks_.back()->AsArray()).push_back(Dict());
-            Node* node = &const_cast<Array&>(node_stacks_.back()->AsArray()).back();
-            node_stacks_.push_back(node);
+    DictItemContext& Builder::StartDict() {
+        IsReady();
+        ExpectKey();
+        init = true;
+        if (nodes_stack_.back()->IsArray()) {
+            auto* ptr = &std::get<Array>(nodes_stack_.back()->GetValue()).emplace_back(Dict{});
+            nodes_stack_.emplace_back(ptr);
         } else {
-            *node_stacks_.back() = Dict();
+            nodes_stack_.back()->GetValue() = Dict{};
+            auto* ptr = nodes_stack_.back();
+            if (expect_value) {
+                nodes_stack_.pop_back();
+                expect_value = false;
+            }
+            nodes_stack_.emplace_back(ptr);
         }
-        return move(*this);
+        return static_cast<DictItemContext&>(*this);
     }
 
-    ArrayItemContext Builder::StartArray() {
-        if (node_stacks_.back()->IsArray()) {
-            const_cast<Array&>(node_stacks_.back()->AsArray()).push_back(Array());
-            Node* node = &const_cast<Array&>(node_stacks_.back()->AsArray()).back();
-            node_stacks_.push_back(node);
+    KeyItemContext& Builder::Key(std::string key) {
+        IsReady();
+        if (nodes_stack_.back()->IsDict()) {
+            auto* ptr = &std::get<Dict>(nodes_stack_.back()->GetValue())[key];
+            expect_value = true;
+            nodes_stack_.emplace_back(ptr);
         } else {
-            *node_stacks_.back() = Array();
+            throw std::logic_error("Неверная команда");
         }
-        return move(*this);
+        return static_cast<KeyItemContext&>(*this);
     }
 
     Builder& Builder::EndDict() {
-        node_stacks_.erase(node_stacks_.end() - 1);
+        IsReady();
+        if (nodes_stack_.back()->IsDict()) {
+            nodes_stack_.pop_back();
+        } else {
+            throw std::logic_error("Неверная команда");
+        }
         return *this;
+    }
+
+    ArrayItemContext& Builder::StartArray() {
+        IsReady();
+        ExpectKey();
+        init = true;
+        if (nodes_stack_.back()->IsArray()) {
+            auto* ptr = &std::get<Array>(nodes_stack_.back()->GetValue()).emplace_back(Array{});
+            nodes_stack_.emplace_back(ptr);
+        } else {
+            nodes_stack_.back()->GetValue() = Array{};
+            auto* ptr = nodes_stack_.back();
+            if (expect_value) {
+                nodes_stack_.pop_back();
+                expect_value = false;
+            }
+            nodes_stack_.emplace_back(ptr);
+        }
+        return static_cast<ArrayItemContext&>(*this);
     }
 
     Builder& Builder::EndArray() {
-        node_stacks_.erase(node_stacks_.end() - 1);
-        return *this;
-    }
-
-    KeyContext Builder::Key(const string& key) {
-        node_stacks_.emplace_back(&const_cast<Dict&>(node_stacks_.back()->AsDict())[key]);
-        return move(*this);
-    }
-
-    Builder& Builder::Value(Node value) {
-        if (node_stacks_.back()->IsArray()) {
-            const_cast<Array&>(node_stacks_.back()->AsArray()).push_back(value);
+        IsReady();
+        if (nodes_stack_.back()->IsArray()) {
+            nodes_stack_.pop_back();
         } else {
-            *node_stacks_.back() = value;
-            node_stacks_.erase(node_stacks_.end() - 1);
+            throw std::logic_error("Неверная команда");
         }
         return *this;
     }
 
     Node Builder::Build() {
-        return move(root_);
+        if (nodes_stack_.size() != 1 || !init) {
+            throw std::logic_error("Неверная команда");
+        }
+        return root_;
     }
 
-    //----------------KeyContext----------------
-
-    KeyContext::KeyContext(Builder&& builder)
-            : builder_(builder) {}
-
-    DictItemContext KeyContext::Value(Node value) {
-        return move(builder_.Value(move(value)));
+    void Builder::IsReady() {
+        if (nodes_stack_.size() == 1 && init) {
+            throw std::logic_error("Неверная команда");
+        }
     }
 
-    ArrayItemContext KeyContext::StartArray() {
-        return move(builder_.StartArray());
+    void Builder::ExpectKey() {
+        if (nodes_stack_.back()->IsDict()) {
+            throw std::logic_error("Неверная команда");
+        }
     }
 
-    DictItemContext KeyContext::StartDict() {
-        return move(builder_.StartDict());
-    }
-
-    //------------------DictItemContext------------------
-
-    DictItemContext::DictItemContext(Builder&& builder)
-            : builder_(builder) {}
-
-    KeyContext DictItemContext::Key(const string& key) {
-        return move(builder_.Key(move(key)));
-    }
-
-    Builder& DictItemContext::EndDict() {
-        return builder_.EndDict();
-    }
-
-    //-----------------ArrayItemContext------------------------
-
-    ArrayItemContext::ArrayItemContext(Builder&& builder)
-            : builder_(builder) {}
-
-    ArrayItemContext& ArrayItemContext::Value(Node value) {
-        builder_.Value(move(value));
-        return *this;
-    }
-
-    DictItemContext ArrayItemContext::StartDict() {
-        return move(builder_.StartDict());
-    }
-
-    ArrayItemContext ArrayItemContext::StartArray() {
-        return move(builder_.StartArray());
-    }
-
-    Builder& ArrayItemContext::EndArray() {
-        return builder_.EndArray();
-    }
-
-} // namespace json
+}

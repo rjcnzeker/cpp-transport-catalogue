@@ -6,23 +6,15 @@
 #include <vector>
 
 namespace graph {
-
+    // вершина
     using VertexId = size_t;
     using EdgeId = size_t;
 
-    enum class TypeEdge {
-        Wait,
-        Bus,
-    };
-
     template<typename Weight>
-    struct Edge {
+    struct Edge { // ребро
         VertexId from;
         VertexId to;
         Weight weight;
-        TypeEdge type;
-        int span_count;
-        size_t bus_id;
     };
 
     template<typename Weight>
@@ -45,6 +37,10 @@ namespace graph {
         const Edge<Weight>& GetEdge(EdgeId edge_id) const;
 
         IncidentEdgesRange GetIncidentEdges(VertexId vertex) const;
+
+        const std::vector<Edge<Weight> >& GetEdges() const;
+
+        const std::vector<IncidenceList>& GetIncidenceLists() const;
 
     private:
         std::vector<Edge<Weight>> edges_;
@@ -83,5 +79,10 @@ namespace graph {
     typename DirectedWeightedGraph<Weight>::IncidentEdgesRange
     DirectedWeightedGraph<Weight>::GetIncidentEdges(VertexId vertex) const {
         return ranges::AsRange(incidence_lists_.at(vertex));
+    }
+
+    template<typename Weight>
+    const std::vector<Edge<Weight>>& DirectedWeightedGraph<Weight>::GetEdges() const {
+        return edges_;
     }
 }  // namespace graph

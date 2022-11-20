@@ -1,243 +1,163 @@
-#include "map_renderer.h"
+#include <cmath>
 
-using namespace std;
+#include "map_renderer.h"
 
 namespace renderer {
 
-    svg::Point SphereProjector::operator()(geo::Coordinates coords) const {
-        return {
-                (coords.lng - min_lon_) * zoom_coeff_ + padding_,
-                (max_lat_ - coords.lat) * zoom_coeff_ + padding_
-        };
+    bool IsZero(double value) {
+        return std::abs(value) < EPSILON;
     }
 
-    template<typename PointInputIt>
-    SphereProjector::SphereProjector(PointInputIt points_begin, PointInputIt points_end, double max_width,
-                                     double max_height, double padding)
-            : padding_(padding) //
-    {
-        // Если точки поверхности сферы не заданы, вычислять нечего
-        if (points_begin == points_end) {
-            return;
-        }
-
-        // Находим точки с минимальной и максимальной долготой
-        const auto [left_it, right_it] = std::minmax_element(
-                points_begin, points_end,
-                [](auto lhs, auto rhs) { return lhs.lng < rhs.lng; });
-        min_lon_ = left_it->lng;
-        const double max_lon = right_it->lng;
-
-        // Находим точки с минимальной и максимальной широтой
-        const auto [bottom_it, top_it] = std::minmax_element(
-                points_begin, points_end,
-                [](auto lhs, auto rhs) { return lhs.lat < rhs.lat; });
-        const double min_lat = bottom_it->lat;
-        max_lat_ = top_it->lat;
-
-        // Вычисляем коэффициент масштабирования вдоль координаты x
-        std::optional<double> width_zoom;
-        if (!IsZero(max_lon - min_lon_)) {
-            width_zoom = (max_width - 2 * padding) / (max_lon - min_lon_);
-        }
-
-        // Вычисляем коэффициент масштабирования вдоль координаты y
-        std::optional<double> height_zoom;
-        if (!IsZero(max_lat_ - min_lat)) {
-            height_zoom = (max_height - 2 * padding) / (max_lat_ - min_lat);
-        }
-
-        if (width_zoom && height_zoom) {
-            // Коэффициенты масштабирования по ширине и высоте ненулевые,
-            // берём минимальный из них
-            zoom_coeff_ = std::min(*width_zoom, *height_zoom);
-        } else if (width_zoom) {
-            // Коэффициент масштабирования по ширине ненулевой, используем его
-            zoom_coeff_ = *width_zoom;
-        } else if (height_zoom) {
-            // Коэффициент масштабирования по высоте ненулевой, используем его
-            zoom_coeff_ = *height_zoom;
-        }
+    //----------------------------------------------------------------------------
+    void MapRenderer::SetRenderSettings(RenderSettings&& render_settings) {
+        render_settings_ = std::move(render_settings);
     }
 
-    void MapRenderer::Render(svg::Document& doc, std::set<const Bus*, BusComparator>& buses) const {
-
-        vector<vector<geo::Coordinates>> geo_coords_buses(buses.size());
-        vector<geo::Coordinates> geo_coords;
-
-        //Распределяем координаты по автобусам, и делаем один контейнер со всеми
-        int count = 0;
-        for (const Bus* bus : buses) {
-            for (const auto& stop : bus->bus_stops_) {
-                geo_coords_buses[count].push_back(stop->coordinates_);
-                geo_coords.push_back(stop->coordinates_);
-            }
-            ++count;
-        }
-
-        //По массиву всех координат вычисляем параметры проецирования
-        const renderer::SphereProjector proj{
-                geo_coords.begin(), geo_coords.end(), width_, height_,
-                padding_
-        };
-
-        vector<vector<svg::Point>> buses_screen_coords(geo_coords_buses.size());
-
-        //Координаты по автобусам преобразуем в точки на экране
-        count = 0;
-        for (const auto& bus_stops_coords : geo_coords_buses) {
-            for (const auto geo_coord : bus_stops_coords) {
-                const svg::Point screen_coord = proj(geo_coord);
-                buses_screen_coords[count].push_back(screen_coord);
-            }
-            ++count;
-        }
-
-        //Выводим линии
-        PrintLines(doc, buses, buses_screen_coords);
-
-        PrintBusesNames(doc, buses, buses_screen_coords);
-
-        //Все остановки
-        set<Stop*, StopComparator> all_stops;
-        for (const auto& bus : buses) {
-            for (Stop* stop : bus->bus_stops_) {
-                all_stops.insert(stop);
-            }
-        }
-
-        PrintCircles(doc, proj, all_stops);
-
-        PrintStopsNames(doc, proj, all_stops);
-
+    //----------------------------------------------------------------------------
+    void MapRenderer::SetBuses(std::vector<const domain::Bus*>&& buses) {
+        buses_ = std::move(buses);
     }
 
-    //Вывод линий
-    void MapRenderer::PrintLines(svg::Document& doc, const std::set<const Bus*, BusComparator>& buses,
-                                 const std::vector<std::vector<svg::Point>>& buses_screen_coords) const {
-        int count = 0;
-        int color_count = 0;
-        for (const auto& bus : buses) {
-            if (bus->bus_stops_.empty()) {
+    //----------------------------------------------------------------------------
+    SphereProjector MapRenderer::CreateProj() {
+        // создаем вектор со всеми остановками входящими в маршруты
+        std::vector<geo::Coordinates> vec_common_coord;
+        vec_common_coord.reserve(stopes_.size());
+        for (const auto& stop : stopes_) {
+            vec_common_coord.push_back(stop->coord);
+        }
+        // Создаём проектор сферических координат на карту
+        return SphereProjector{vec_common_coord.begin(), vec_common_coord.end(),
+                               render_settings_.width, render_settings_.height, render_settings_.padding};
+    }
+
+    //----------------------------------------------------------------------------
+    void MapRenderer::DrawLineBuses(svg::Document& doc, const SphereProjector& proj) {
+        size_t counter_color = 0;
+        for (const auto& bus : buses_) {
+            if (bus->stops.empty()) {
                 continue;
             }
-
-            if (color_count == static_cast<int>(color_palette_.size())) {
-                color_count = 0;
+            svg::Polyline polyl;
+            polyl.SetStrokeColor(render_settings_.color_palette[counter_color]);
+            if (++counter_color >= render_settings_.color_palette.size()) {
+                counter_color = 0;
             }
-            svg::Polyline line{};
-            line.SetStrokeColor(color_palette_[color_count]).
-                    SetFillColor("none").
-                    SetStrokeWidth(line_width_).
-                    SetStrokeLineCap(svg::StrokeLineCap::ROUND).
-                    SetStrokeLineJoin(svg::StrokeLineJoin::ROUND);
-            if (!bus->there_and_back_) {
-                for (const auto& point : buses_screen_coords[count]) {
-                    line.AddPoint(point);
-                }
-            } else {
-                for (const auto& point : buses_screen_coords[count]) {
-                    line.AddPoint(point);
-                }
-                for (auto i = buses_screen_coords[count].rbegin() + 1;
-                     i < buses_screen_coords[count].rend(); ++i) {
-                    line.AddPoint(*i);
+            polyl.SetFillColor(svg::NoneColor);
+            polyl.SetStrokeWidth(render_settings_.line_width);
+            polyl.SetStrokeLineCap(svg::StrokeLineCap::ROUND);
+            polyl.SetStrokeLineJoin(svg::StrokeLineJoin::ROUND);
+
+            for (const auto& stop : bus->stops) {
+                polyl.AddPoint(proj(stop->coord));
+            }
+            doc.Add(polyl);
+        }
+    }
+
+    //----------------------------------------------------------------------------
+    void MapRenderer::DrawNameBuses(svg::Document& doc, const SphereProjector& proj) {
+        size_t counter_color = 0;
+        for (const auto& bus : buses_) {
+            if (bus->stops.empty()) { // если остановки есть
+                continue;
+            }
+            const domain::Stop* stop = *bus->stops.begin();
+            // задаем цвет как у маршрута
+            svg::Color fill_color = render_settings_.color_palette[counter_color];
+            if (++counter_color >= render_settings_.color_palette.size()) {
+                counter_color = 0;
+            }
+            DrawNameBus(doc, proj, stop->coord, fill_color, bus->name);
+            if (!bus->is_round) {
+                size_t id = std::ceil(bus->stops.size() / 2); // ATTENTION
+                // если остановки начала и конца не равны подписываем остановку конца
+                if (stop != bus->stops[id]) {
+                    stop = bus->stops[id];
+                    DrawNameBus(doc, proj, stop->coord, fill_color, bus->name);
                 }
             }
-            doc.Add(line);
-            ++count;
-            ++color_count;
         }
     }
 
-    void MapRenderer::PrintBusesNames(svg::Document& doc, std::set<const Bus*, BusComparator>& buses,
-                                      const std::vector<std::vector<svg::Point>>& buses_screen_coords) const {
-        int text_count = 0;
-        int text_color_count = 0;
-        for (const auto& bus : buses) {
-            if (text_color_count == static_cast<int>(color_palette_.size())) text_color_count = 0;
-
-            svg::Text text;
-
-            text.
-                    SetPosition(*buses_screen_coords[text_count].begin()).
-                    SetOffset(bus_label_offset_).
-                    SetFontSize(bus_label_font_size_).
-                    SetFontFamily("Verdana").
-                    SetFontWeight("bold").
-                    SetData(bus->name_);
-
-            svg::Text under_text = text;
-
-            text.SetFillColor(color_palette_[text_color_count]);
-
-            under_text.
-                    SetFillColor(underlayer_color_).
-                    SetStrokeColor(underlayer_color_).
-                    SetStrokeWidth(underlayer_width_).
-                    SetStrokeLineCap(svg::StrokeLineCap::ROUND).
-                    SetStrokeLineJoin(svg::StrokeLineJoin::ROUND);
-
-
-            doc.Add(under_text);
-            doc.Add(text);
-
-            // если маршрут не кольцевой и конечные не совпадают
-            if (bus->there_and_back_ && *bus->bus_stops_.begin() != *bus->bus_stops_.rbegin()) {
-                svg::Text text_second = text;
-                text_second.SetPosition(*buses_screen_coords[text_count].rbegin());
-                svg::Text under_text_second = under_text;
-                under_text_second.SetPosition(*buses_screen_coords[text_count].rbegin());
-
-                doc.Add(under_text_second);
-                doc.Add(text_second);
-            }
-
-            ++text_count;
-            ++text_color_count;
+    //----------------------------------------------------------------------------
+    void MapRenderer::DrawCircStopes(svg::Document& doc, const SphereProjector& proj) {
+        for (const auto& stop : stopes_) {
+            svg::Circle circle;
+            circle.SetCenter(proj(stop->coord));
+            circle.SetRadius(render_settings_.stop_radius);
+            circle.SetFillColor("white"s);
+            doc.Add(circle);
         }
     }
 
-    void MapRenderer::PrintCircles(svg::Document& doc, const SphereProjector& proj,
-                                   set<Stop*, StopComparator>& all_stops) const {
-        for (const Stop* stop : all_stops) {
-            const svg::Point screen_coord = proj(stop->coordinates_);
-            svg::Circle stop_circle(screen_coord, stop_radius_);
-            stop_circle.SetFillColor("white");
-            doc.Add(stop_circle);
+    //----------------------------------------------------------------------------
+    void MapRenderer::DrawNameStopes(svg::Document& doc, const SphereProjector& proj) {
+        for (const auto& stop : stopes_) {
+            svg::Text note_stop;
+            note_stop.SetPosition(proj(stop->coord));
+            note_stop.SetOffset(render_settings_.stop_label_offset);
+            note_stop.SetFontSize(render_settings_.stop_label_font_size);
+            note_stop.SetFontFamily("Verdana"s);
+            note_stop.SetData(std::string(stop->name));
+            note_stop.SetFillColor("black"s);
+
+            svg::Text note_stop_backgtound(note_stop);
+            note_stop_backgtound.SetFillColor(render_settings_.underlayer_color);
+            note_stop_backgtound.SetStrokeColor(render_settings_.underlayer_color);
+            note_stop_backgtound.SetStrokeWidth(render_settings_.underlayer_width);
+            note_stop_backgtound.SetStrokeLineCap(svg::StrokeLineCap::ROUND);
+            note_stop_backgtound.SetStrokeLineJoin(svg::StrokeLineJoin::ROUND);
+
+            doc.Add(note_stop_backgtound);
+            doc.Add(note_stop);
         }
     }
 
-    void
-    MapRenderer::PrintStopsNames(svg::Document& doc, const SphereProjector& proj,
-                                 set<Stop*, StopComparator>& all_stops) const {
-        for (const Stop* stop : all_stops) {
-            svg::Text text;
+    //----------------------------------------------------------------------------
+    void MapRenderer::DrawNameBus(svg::Document& doc, const SphereProjector& proj,
+                                  const geo::Coordinates& coord, const svg::Color& fill_color,
+                                  std::string_view name_bus) {
+        svg::Text text;
+        text.SetPosition(proj(coord));
+        text.SetOffset(render_settings_.bus_label_offset);
+        text.SetFontSize(render_settings_.bus_label_font_size);
+        text.SetFontFamily("Verdana"s);
+        text.SetFontWeight("bold"s);
+        text.SetData(std::string(name_bus));
+        text.SetFillColor(fill_color);
 
-            const svg::Point screen_coord = proj(stop->coordinates_);
+        svg::Text text_backgtound(text);
+        text_backgtound.SetFillColor(render_settings_.underlayer_color);
+        text_backgtound.SetStrokeColor(render_settings_.underlayer_color);
+        text_backgtound.SetStrokeWidth(render_settings_.underlayer_width);
+        text_backgtound.SetStrokeLineCap(svg::StrokeLineCap::ROUND);
+        text_backgtound.SetStrokeLineJoin(svg::StrokeLineJoin::ROUND);
 
-            //Общие свойства текста и подложки
-            text.
-                    SetPosition(screen_coord).
-                    SetOffset(stop_label_offset_).
-                    SetFontSize(stop_label_font_size_).
-                    SetFontFamily("Verdana").
-                    SetData(stop->name_);
-
-            svg::Text under_text = text;
-
-            text.SetFillColor("black");
-
-            under_text.
-                    SetFillColor(underlayer_color_).
-                    SetStrokeColor(underlayer_color_).
-                    SetStrokeWidth(underlayer_width_).
-                    SetStrokeLineCap(svg::StrokeLineCap::ROUND).
-                    SetStrokeLineJoin(svg::StrokeLineJoin::ROUND);
-
-            doc.Add(under_text);
-            doc.Add(text);
-        }
+        doc.Add(text_backgtound);
+        doc.Add(text);
     }
 
-} //namespace renderer
+    //----------------------------------------------------------------------------
+    const RenderSettings& MapRenderer::GetRenderSettings() const {
+        return render_settings_;
+    }
+
+    //----------------------------------------------------------------------------
+    void MapRenderer::SetUnicStops(const std::vector<const domain::Stop*>&& stopes) {
+        stopes_ = std::move(stopes);
+    }
+
+    //----------------------------------------------------------------------------
+    svg::Document MapRenderer::GetDocMapBus() {
+        svg::Document doc;
+        SphereProjector proj = CreateProj();
+        DrawLineBuses(doc, proj);
+        DrawNameBuses(doc, proj);
+        DrawCircStopes(doc, proj);
+        DrawNameStopes(doc, proj);
+        return doc;
+    }
+    //----------------------------------------------------------------------------
+}// namespace MapRenderer
+

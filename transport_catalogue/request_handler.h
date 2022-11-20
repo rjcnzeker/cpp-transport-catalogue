@@ -1,96 +1,48 @@
 #pragma once
 
+#include <unordered_set>
+#include <filesystem>
+
 #include "transport_catalogue.h"
 #include "domain.h"
-#include "json.h"
 #include "map_renderer.h"
 #include "transport_router.h"
-#include "router.h"
-
-#include <optional>
-#include <unordered_set>
-
-namespace cin_input {
-
-    class InputReader {
-    public:
-        explicit InputReader(int number_requests, std::istream& input);
-
-        transport_catalogue::TransportCatalogue ProcessRequests();
-
-    private:
-
-        enum class RequestType {
-            BUS,
-            STOP,
-        };
-        std::map<RequestType, std::vector<std::string>> request_queue_;
-
-        static void
-        ProcessStops(transport_catalogue::TransportCatalogue& transport_catalogue, std::string_view& request);
-
-        static void
-        ProcessBuses(transport_catalogue::TransportCatalogue& transport_catalogue, std::string_view& request);
-    };
-}
-
-namespace cin_output {
-
-    void ReadQuery(int num_queries, transport_catalogue::TransportCatalogue& transport_catalogue, std::istream& input);
-
-    namespace print {
-
-        void Buss(const std::string& name, transport_catalogue::TransportCatalogue& transport_catalogue,
-                  std::ostream& output);
-
-        void
-        Stop(std::string& name, transport_catalogue::TransportCatalogue& transport_catalogue, std::ostream& output);
-
-    }
-}
 
 class RequestHandler {
+
 public:
     // MapRenderer понадобится в следующей части итогового проекта
-    RequestHandler(transport_catalogue::TransportCatalogue& db, const renderer::MapRenderer& renderer,
-                   transport_catalogue::TransportRouter& router)
-            : catalogue_(db), renderer_(renderer), router_(router) {}
+    RequestHandler(TransportCatalogue::TransportCatalogue& trnsprt_ctlg,
+                   TransportRouter::TransportRouter& trnsprt_routr_,
+                   renderer::MapRenderer& map_rendr_);
 
-    void AddBus(std::string name, std::deque<std::string> stops, bool there_and_back);
+    // Возвращает информацию о маршруте (запрос Bus)
+    std::optional<domain::BusStat> GetBusStat(const std::string_view& bus_name) const;
 
-    void AddStop(std::string name, geo::Coordinates coordinates, const std::map<std::string, int>& distances);
+    // Возвращает информацию о маршруте (запрос Route)
+    std::optional<domain::RoutStat> GetRouteStat(std::string_view stop_from, std::string_view stop_to) const;
 
-    Bus GetBus(const std::string& name);
+    // Возвращает маршруты, проходящие через
+    std::optional<const std::unordered_set<const domain::Bus*>*>
+    GetBusesByStop(const std::string_view& stop_name) const;
 
-    Stop GetStop(const std::string& name);
+    std::vector<const domain::Bus*> GetBusesLex() const;
 
-    std::set<std::string> GetBusesOnStop(const std::string& name);
+    // Возвращает перечень уникальных остановок в лекс порядке через которые проходят маршруты
+    const std::vector<const domain::Stop*> GetUnicLexStopsIncludeBuses() const;
 
-    std::set<const Bus*, BusComparator> GetBuses() const;
+    svg::Document RenderMap() const;
 
-    // Этот метод будет нужен в следующей части итогового проекта
-    void RenderMap(svg::Document& doc) const;
+    void CallDsrlz(const std::filesystem::path& path);
 
-    std::optional<graph::Router<double>::RouteInfo> GetRoute(const string& from, const string& to) {
-        return router_.GetRoute(from, to);
-    }
-
-    void ConfigureGraph();
-
-    void ConfigureRouter();
-
-    graph::Edge<double> GetEdge(size_t edge_id);
-
-    string GetStopByVertexId(size_t id);
-
-    string GetBusById(size_t bus_id);
+    void CallSrlz(const std::filesystem::path& path) const;
 
 private:
+    domain::BusStat CreateBusStat(const domain::Bus* bus) const;
 
-    transport_catalogue::TransportCatalogue& catalogue_;
+    TransportCatalogue::TransportCatalogue& trnsprt_ctlg_;
 
-    // RequestHandler использует агрегацию объектов "Транспортный Справочник" и "Визуализатор Карты"
-    const renderer::MapRenderer& renderer_;
+    TransportRouter::TransportRouter& trnsprt_routr_;
 
-    transport_catalogue::TransportRouter& router_;
+    renderer::MapRenderer& map_rendr_;
 };

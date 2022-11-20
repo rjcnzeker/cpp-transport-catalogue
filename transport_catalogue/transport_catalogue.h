@@ -1,56 +1,81 @@
 #pragma once
 
-#include <deque>
-#include <string>
-#include <unordered_map>
-#include <utility>
+#include <iostream>
+#include <unordered_set>
 #include <vector>
+#include <deque>
+#include <set>
 #include <map>
 #include <unordered_map>
-#include <set>
+#include <math.h>
 
-#include "geo.h"
 #include "domain.h"
 
+namespace TransportCatalogue {
 
-namespace transport_catalogue {
+    namespace detail {
+
+        class HasherStopes {
+        public:
+            size_t operator()(std::pair<const domain::Stop*, const domain::Stop*> par) const {
+                size_t from_stop = std::hash<const void*>{}(par.first);
+                size_t to_stop = std::hash<const void*>{}(par.second);
+                return from_stop * 37 + to_stop * pow(37, 2);
+            }
+        };
+    }// namespace detail
+
+    using namespace domain;
 
     class TransportCatalogue {
+        using UmapRangStop = std::unordered_map<std::pair<const Stop*, const Stop*>, size_t, detail::HasherStopes>;
     public:
+        TransportCatalogue();
 
-        struct PairStopsHasher {
-            size_t operator()(const std::pair<std::string_view, std::string_view>& stops_pair) const;
+        void AddBus(const Bus& bus);
 
-        private:
-            std::hash<std::string> d_hasher_;
+        void AddStop(const Stop& stop);
+
+        void AddRangeStops(const StopsLenght& stops_lenght);
+
+        void AddBusesFromStop(const Bus& bus);
+
+        const std::deque<Stop>& GetStops() const {
+            return stops_;
         };
 
-        TransportCatalogue() = default;
+        std::vector<const domain::Bus*> GetBusesLex() const;
 
-        void AddStop(std::string& name, geo::Coordinates coordinates, const std::map<std::string, int>& distances);
+        std::size_t GetRangeStops(const Stop* from_stop, const Stop* to_stop) const;
 
-        void AddBus(std::string& name, const std::deque<std::string>& stops, bool there_and_back);
+        domain::BusStat GetBusStat(const Bus* bus) const;
 
-        Bus GetBus(std::string_view name);
+        std::optional<const Bus*> FindBus(std::string_view bus_name) const;
 
-        std::set<const Bus*, BusComparator> GetBuses();
+        std::optional<const Stop*> FindStop(std::string_view stop_name) const;
 
-        std::set<std::string> GetBusesOnStop(const std::string& name);
+        const std::map<std::string_view, std::unordered_set<const Bus*>>& GetBusesFromStop() const;
 
-        Stop GetStop(std::string_view name);
+        const std::deque<Bus>& GetBuses() const;
 
-        const std::unordered_map<std::string_view, Stop*>& GetStops() const;
-
-        const std::unordered_map<std::pair<std::string, std::string>, int, PairStopsHasher>& GetDistances() const;
+        const UmapRangStop& GetIndexRageStop() const;
 
     private:
         std::deque<Stop> stops_;
-        std::unordered_map<std::string_view, Stop*> stopname_to_stops_;
+
+        std::unordered_map<std::string_view, const Stop*> index_stops_;
 
         std::deque<Bus> buses_;
-        std::unordered_map<std::string_view, const Bus*> busname_to_buses_;
 
-        std::unordered_map<std::pair<std::string, std::string>, int, PairStopsHasher> distances_;
+        // список автобусов через остановку
+        std::map<std::string_view, std::unordered_set<const Bus*>> buses_from_stop_; // нарушился алфавитный порядок но сделал так потому что в тренажере GetBusesByStop возвращала именно unordered_set
+
+        std::unordered_map<std::string_view, const Bus*> index_buses_;
+
+        UmapRangStop index_rage_;
+
+        size_t counter_stop_ = 0;
     };
 
-} // namespace transport_catalogue
+}// namespace TransportCatalogue
+
